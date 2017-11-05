@@ -205,7 +205,7 @@ class OracleDbInf(object):
                 SP = sio.loadmat(DATAPATH+'SP.mat')['SP']
                 CFP = sio.loadmat(DATAPATH+'CFP.mat')['CFP']
                 self.__write2bescfp_file(tdays_data[len(BP):],
-                BP, EP, SP, CFP)
+                BP, EP, SP, CFP, stklist)
             else:
                 self.log.info('BP,EP,SP,CFP¸üÐÂÍê±Ï')
          else:
@@ -545,6 +545,11 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'open_original.mat', mdict={'open_origianl':open_original})
             sio.savemat(DATAPATH+'high_original.mat', mdict={'high_origianl':high_original})
             sio.savemat(DATAPATH+'low_original.mat', mdict={'low_origianl':low_original})
-       
+
+    def __write2bescfp_file(self, datelist, bp_original,
+        ep_original, sp_original, cfp_original, stklist):
+        pass
+        
+
         
         
