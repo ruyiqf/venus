@@ -223,6 +223,21 @@ class WindPyInf(object):
         else:
             self.__write2marketvalue_file(tdays_data, np.array([]), stklist)
 
+    def wind_download_profit_pred_value(self):
+        """提取预测净利润因子数据
+        """
+        tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data'])
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/profit_pred_4w.mat')):
+            profit_pred_4w = sio.loadmat(DATAPATH+'daily_factor/profit_pred_4w.mat')['profit_pred_4w']
+            if(len(profit_pred_4w) < len(tdays_data)):
+                self.__write2profitpred4w_file(tdays.data[len(profit_pred_4w):], profit_pred_4w, stklist)
+            else:
+                self.log.info('预测净利润因子已经更新到最新')
+        else:
+            self.__write2profitpred4w_file(tdays_data, np.array([]), stklist)
+
     def __convert_row2column(self, np_array):
         """把行向量转置成列向量
         :np_array:行向量
@@ -462,6 +477,11 @@ class WindPyInf(object):
             sio.savemat(DATAPATH+'ZZ500.mat', mdict={'ZZ500':original})
 
     def __write2marketvalue_file(self, datelist, original, stklist):
+        """把市值因子写入文件
+        :datelist: 更新时间序列
+        :original: 原始市值数据
+        :stklist: 股票列表
+        """
         tmp_marketvalue = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i][0][0], '%Y/%m/%d').strftime('%Y%m%d')
@@ -472,7 +492,25 @@ class WindPyInf(object):
         else:
             original = np.vstack((original, tmp_marketvalue))
             sio.savemat(DATAPATH+'daily_factor/MV.mat', mdict={'MV':original})
-        
+
+    def __write2profitpred4w_file(self, datelist, original, stklist):
+        """把预测盈利因子写入文件
+        :datelist: 更新时间序列
+        :original: 原始预测盈利因子
+        :stklist: 股票列表
+        """
+        tmp_profitpred4w = np.zeros((len(datelist), len(stklist)))
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i][0][0], '%Y/%m/%d').strftime('%Y%m%d')
+            syear = datetime.datetime.strptime(datelist[i][0][0], '%Y/%m/%d').strftime('%Y')
+            data = w.wss(','.join(stklist), 'west_nproc_4w', 'tradeDate=%s;year=%s'%(sdate, syear)).Data[0]
+            tmp_profitpred4w[i] = np.array(data)
+        if original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/profit_pred_4w.mat', mdict={'profit_pred_4w':tmp_profitpred4w})
+        else:
+            original = np.vstack((original, tmp_profitpred4w))
+            sio.savemat(DATAPATH+'daily_factor/profit_pred_4w.mat', mdict={'profit_pred_4w':original})
+
     def __del__(self):
         w.stop()
 

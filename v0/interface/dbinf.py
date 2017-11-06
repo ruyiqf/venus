@@ -193,7 +193,105 @@ class OracleDbInf(object):
              self.__write2price_file(tdays_data, np.array([]),
                                      np.array([]), np.array([]),
                                      stklist)
+
+    def db_download_tps_factor(self):
+        """更新TPS相关因子数据
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/TPS.mat')):
+            tps = sio.loadmat(DATAPATH+'daily_factor/TPS.mat')['TPS']
+            if(len(tps) < len(tdays_data)):
+                tps_180_original = sio.loadmat(DATAPATH+'daily_factor/TPS_180')['TPS_180']
+                res_tps_180_original = sio.loadmat(DATAPATH+'daily_factor/res_TPS_180.mat')['res_TPS_180']
+                self.__write2tps_file(tdays_data[len(tps):], tps_original,
+                                      tps_180_original, res_tps_180_original,
+                                      stklist)
+            else:
+                self.log.info('TPS因子已经更新完毕')
+         else:
+             self.__write2tps_file(tdays_data, np.array([]),
+                                   np.array([]), np.array([]),
+                                   stklist)
             
+    def db_download_wrating90_factor(self):
+        """更新wrating_upgrade90天
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/wrating_upgrade.mat')):
+            wrating_upgrade = sio.loadmat(DATAPATH+'daily_factor/wrating_upgrade.mat')['wrating_upgrade']
+            if(len(wrating_upgrade) < len(tdays_data)):
+                self.__write2wratingupgrade_file(tdays_data[len(wrating_upgrade):], wrating_upgrade, stklist)
+            else:
+                self.log.info('wrating90因子已经更新完毕')
+         else:
+             self.__write2wratingupgrade_file(tdays_data, wrating_upgrade, stklist)
+
+    def db_download_fy1_factor(self):
+        """更新盈利预测FY1
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/roe_forcast_FY1.mat')):
+            roe_forcast_fy1 = sio.loadmat(DATAPATH+'daily_factor/roe_forcast_FY1.mat')['roe_forcast_FY1']
+            pe_forcast_fy1 = sio.loadmat(DATAPATH+'daily_factor/pe_forcast_FY1.mat')['pe_forcast_FY1']
+            pb_forcast_fy1 = sio.loadmat(DATAPATH+'daily_factor/pb_forcast_FY1.mat')['pb_forcast_FY1']
+            peg_forcast_fy1 = sio.loadmat(DATAPATH+'daily_factor/peg_forcast_FY1.mat')['peg_forcast_FY1']
+            if(len(roe_forcast_fy1) < len(tdays_data)):
+                self.__write2forcast_file(tdays_data[len(roe_forcast_fy1):], roe_forcast_fy1,
+                        pe_forcast_fy1, pb_forcast_fy1,
+                        peg_forcast_fy1, stklist)
+            else:
+                self.log.info('盈利预测ROE,PE,PB,PEG因子已经更新完毕')
+         else:
+             self.__write2forcast_file(tdays_data, np.array([]),
+                     np.array([]), np.array([]),
+                     np.array([]), stklist)
+    
+    def db_download_fttm_factor(self): 
+        """更新FTTM因子数据
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/roe_forcast_FTTM.mat')):
+            roe_forcast_fttm = sio.loadmat(DATAPATH+'daily_factor/roe_forcast_FTTM.mat')['roe_forcast_FTTM']
+            pe_forcast_fttm = sio.loadmat(DATAPATH+'daily_factor/pe_forcast_FTTM.mat')['pe_forcast_FTTM']
+            pb_forcast_fttm = sio.loadmat(DATAPATH+'daily_factor/pb_forcast_FTTM.mat')['pb_forcast_FTTM']
+            peg_forcast_fttm = sio.loadmat(DATAPATH+'daily_factor/peg_forcast_FTTM.mat')['peg_forcast_FTTM']
+            if(len(roe_forcast_fttm) < len(tdays_data)):
+                self.__write2forcastfttm_file(tdays_data[len(roe_forcast_fttm):], roe_forcast_fttm,
+                        pe_forcast_fttm, pb_forcast_fttm,
+                        peg_forcast_fttm, stklist)
+            else:
+                self.log.info('盈利预测ROE,PE,PB,PEG FTTM因子已经更新完毕')
+         else:
+             self.__write2forcastfttm_file(tdays_data, np.array([]),
+                     np.array([]), np.array([]),
+                     np.array([]), stklist)
+
+    def db_download_yoy_factor(self): 
+        """更新yoy因子数据
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/netprofit_forcast_YOY.mat')):
+            netprofit_forcast_yoy = sio.loadmat(DATAPATH+'daily_factor/netprofit_forcast_YOY.mat')['netprofit_forcast_YOY']
+            roe_forcast_yoy = sio.loadmat(DATAPATH+'daily_factor/roe_forcast_YOY.mat')['roe_forcast_YOY']
+            if(len(roe_forcast_yoy) < len(tdays_data)):
+                self.__write2forcastyoy_file(tdays_data[len(roe_forcast_yoy):], netprofit_forcast_yoy,
+                        roe_forcast_yoy, stklist)
+            else:
+                self.log.info('盈利预测YOY因子已经更新完毕')
+         else:
+             self.__write2forcastyoy_file(tdays_data, np.array([]),
+                     np.array([]), stklist)
+        
     def db_download_bescfp_factor(self):
         tdays_data = self.tdays_data
         stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
@@ -211,6 +309,41 @@ class OracleDbInf(object):
          else:
              self.__write2bescfp_file(tdays_data, np.array([]),
              np.array([]), np.array([]), np.array([]), stklist)
+
+    def db_download_cagr_factor(self):
+        """更新cagr因子
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/netprofit_forcast_CAGR.mat')):
+            netprofit_forcast_cagr = sio.loadmat(DATAPATH+'daily_factor/netprofit_forcast_CAGR.mat')['netprofit_forcast_CAGR']
+            roe_forcast_cagr = sio.loadmat(DATAPATH+'daily_factor/roe_forcast_CAGR.mat')['roe_forcast_CAGR']
+            if(len(roe_forcast_cagr) < len(tdays_data)):
+                self.__write2cagr_file(tdays_data[len(roe_forcast_cagr):], netprofit_forcast_cagr,
+                        roe_forcast_cagr, stklist)
+            else:
+                self.log.info('CAGR更新完毕')
+         else:
+             self.__write2cagr_file(tdays_data, np.array([]), np.array([]), stklist)
+
+    def db_download_ratingavg_factor(self):
+        """更新券商评级因子
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/rating_avg.mat')):
+            rating_avg = sio.loadmat(DATAPATH+'daily_factor/rating_avg.mat')['rating_avg']
+            rating_net_upgrade = sio.loadmat(DATAPATH+'daily_factor/rating_net_upgrade.mat')['rating_net_upgrade']
+            rating_instnum = sio.loadmat(DATAPATH+'daily_factor/rating_instnum.mat')['rating_instnum']
+            if(len(rating_avg) < len(tdays_data)):
+                self.__write2broker_file(tdays_data[len(rating_avg):], rating_avg,
+                        rating_net_upgrade, rating_instum, stklist)
+            else:
+                self.log.info('券商评级因子更新完毕')
+         else:
+             self.__write2broker_file(tdays_data, np.array([]), np.array([]), np.array([]), stklist)
 
     def __convert_mat2list(self, mat_ndarray):
         """把mat的高维数据转换成list类型
@@ -489,6 +622,8 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'volume.mat', mdict={'volume':tmp_volume})
             sio.savemat(DATAPATH+'amount.mat', mdict={'amount':tmp_amount})
             sio.savemat(DATAPATH+'TR.mat', mdict={'TR':tmp_tr})
+            price_original = np.zeros(np.shape(tmp_close))
+            price_original = tmp_close
         else:
             price_original = np.vstack((price_original, tmp_close))
             adjfactor_original = np.vstack((adjfactor_original, tmp_adjfactor))
@@ -502,7 +637,22 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'amount.mat', mdict={'amount':amount_original})
             sio.savemat(DATAPATH+'TR.mat', mdict={'TR':TR_original})
 
+        #计算前复权价格
+        price_forward_adjusted = np.zeros(np.shape(price_original))
+        for i in range(len(price_original)):
+            price_forward_adjusted[i] = price_original[i] * adjfactor_original[i] / adjfactor_original[-1]
+        self.price_forward_adjusted = price_forward_adjusted 
+        self.adjfactor = adjfactor_original
+        sio.savemat(DATAPATH+'daily_factor/price_daily_1.mat', mdict={'price_daily_1.mat':price_forward_adjusted})
+
     def __write2price_file(self, datelist, open_original, high_original, low_original, stklist):
+        """把价格因子写入文件
+        :datelist: 时间序列
+        :open_original: 原始开盘价格
+        :high_original: 原始最高价格
+        :low_original: 原始最低价格
+        :stklist: 股票列表
+        """
         cursor = self.conn.cursor()
         tmp_open = np.zeros((len(datelist),len(stklist)))
         tmp_high = np.zeros((len(datelist),len(stklist)))
@@ -512,7 +662,7 @@ class OracleDbInf(object):
             sql = 'select s_info_windcode,s_dq_open,s_dq_high,s_dq_low from  AShareEODPrices   WHERE trade_dt=%s' % sdate
             cursor.execute(sql)
             rs = cursor.fetchall()
-            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            ret = self.__convert_dbdata2tuplelist(rs, 4)
             s_info_windcode = ret[0]
             s_dq_open = ret[1]
             s_dq_high = ret[2]
@@ -527,9 +677,13 @@ class OracleDbInf(object):
                     dq_high.append(s_dq_high[idx])
                     dq_low.append(s_dq_low[idx])
                 else:
-                    dq_open.append(-1)
-                    dq_high.append(-1)
-                    dq_low.append(-1)
+                    dq_open.append(float('nan'))
+                    dq_high.append(float('nan'))
+                    dq_low.append(float('nan'))
+
+            dq_open = Series(dp_open).fillna(method='ffill').values 
+            dp_high = Series(dp_high).fillna(method='ffill').values
+            dp_low = Series(dp_low).fillna(method='ffill').values
             tmp_open[i] = np.array(dq_open)
             tmp_high[i] = np.array(dq_high)
             tmp_low[i] = np.array(dq_low)
@@ -537,19 +691,430 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'open_original.mat', mdict={'open_original':tmp_open})
             sio.savemat(DATAPATH+'high_original.mat', mdict={'open_original':tmp_high})
             sio.savemat(DATAPATH+'low_original.mat', mdict={'open_original':tmp_low})
+            open_original = np.array(np.shape(tmp_open))
+            open_original = tmp_open
+            high_original = np.array(np.shape(tmp_hight))
+            high_original = tmp_high
+            low_original = np.array(np.shape(tmp_low))
+            low_original = tmp_low
         else:
             open_original = np.vstack((open_original, tmp_open))
             high_original = np.vstack((high_original, tmp_high))
             low_original = np.vstack((low_original, tmp_low))
-            
             sio.savemat(DATAPATH+'open_original.mat', mdict={'open_origianl':open_original})
             sio.savemat(DATAPATH+'high_original.mat', mdict={'high_origianl':high_original})
             sio.savemat(DATAPATH+'low_original.mat', mdict={'low_origianl':low_original})
 
+        #计算各种前复权的价格
+        open_forward_adjusted = np.zeros(np.shape(open_original))
+        high_forward_adjusted = np.zeros(np.shape(high_original))
+        low_forward_adjusted = np.zeros(np.shape(low_original))
+        for i in range(open_original):
+            open_forward_adjusted = open_original[i] * self.adjfactor[i] / self.adjfactor[-1]
+            high_forward_adjusted = high_original[i] * self.adjfactor[i] / self.adjfactor[-1]
+            low_forward_adjusted = low_original[i] * self.adjfactor[i] / self.adjfactor[-1]
+
+        sio.savemat(DATAPATH+'open_forward_adjusted.mat', mdict={'open_forward_adjusted':open_forward_adjusted})
+        sio.savemat(DATAPATH+'high_forward_adjusted.mat', mdict={'high_forward_adjusted':high_forward_adjusted})
+        sio.savemat(DATAPATH+'low_forward_adjusted.mat', mdict={'low_forward_adjusted':low_forward_adjusted})
+            
     def __write2bescfp_file(self, datelist, bp_original,
         ep_original, sp_original, cfp_original, stklist):
-        pass
-        
+        """把基本面因子写入文件
+        :datelist: 时间序列
+        :bp_original: BP原始因子数据
+        :ep_original: EP原始因子数据
+        :sp_original: SP原始因子数据
+        :cfp_original: CFP原始因子数据
+        :stklist: 股票序列
+        """
+        cursor = self.conn.cursor()
+        tmp_bp = np.zeros((len(datelist),len(stklist)))
+        tmp_ep = np.zeros((len(datelist),len(stklist)))
+        tmp_sp = np.zeros((len(datelist),len(stklist)))
+        tmp_cfp = np.zeros((len(datelist),len(stklist)))
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_info_windcode,s_val_pb_new,s_val_pe_ttm,s_val_ps_ttm,s_val_pcf_ocfttm from  AShareEODDerivativeIndicator   WHERE trade_dt=%s' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 5)
+            s_info_windcode = ret[0]
+            s_val_pb_new = ret[1]
+            s_val_pe_ttm = ret[2]
+            s_val_ps_ttm = ret[3]
+            s_val_pcf_ocfttm = ret[4]
+            bp = list()
+            ep = list()
+            sp = list()
+            cfp = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    bp.append(s_val_pb_new[idx])
+                    ep.append(s_val_pe_ttm[idx])
+                    sp.append(s_val_ps_ttm[idx])
+                    cfp.append(s_val_pcf_ocfttm[idx])
 
+            tmp_bp[i] = 1.0/np.array(bp)
+            tmp_ep[i] = 1.0/np.array(ep)
+            tmp_sp[i] = 1.0/np.array(sp)
+            tmp_cfp[i] = 1.0/np.array(cfp)
+
+        if bp_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/BP.mat', mdict={'BP':tmp_bp})
+            sio.savemat(DATAPATH+'daily_factor/EP.mat', mdict={'EP':tmp_ep})
+            sio.savemat(DATAPATH+'daily_factor/SP.mat', mdict={'SP':tmp_sp})
+            sio.savemat(DATAPATH+'daily_factor/CFP.mat', mdict={'CFP':tmp_cfp})
+        else:
+            bp_original = np.vstack((bp_original, tmp_bp))
+            ep_original = np.vstack((ep_original, tmp_ep))
+            sp_original = np.vstack((sp_original, tmp_sp))
+            cfp_original = np.vstack((cfp_original, tmp_cfp))
+            sio.savemat(DATAPATH+'daily_factor/BP.mat', mdict={'BP':bp_original})
+            sio.savemat(DATAPATH+'daily_factor/EP.mat', mdict={'EP':ep_original})
+            sio.savemat(DATAPATH+'daily_factor/SP.mat', mdict={'SP':sp_original})
+            sio.savemat(DATAPATH+'daily_factor/CFP.mat', mdict={'CFP':cfp_original})
+
+
+    def __write2tps_file(self, datelist, tps_original,
+            tps_180_original, res_tps_180_original,stklist):
+        """把TPS因子写入文件
+        :datelist: 时间序列
+        :tps_original: TPS原始因子数据
+        :tps_180_original: TPS_180原始因子数据
+        :res_tps_180_original: res_TPS_180原始因子数据
+        :stklist: 股票序列
+        """
+        cursor = self.conn.cursor()
+        tmp_tps = np.zeros((len(datelist),len(stklist)))
+        tmp_tps_180 = np.zeros((len(datelist),len(stklist)))
+        tmp_res_tps_180 = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_info_windcode,s_est_price from  AShareStockRatingConsus   WHERE rating_dt=%s' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_info_windcode = ret[0]
+            s_est_price = ret[1]
+            est_price = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    est_price.append(s_est_price[idx])
+                else:
+                    est_price.append(-1)
+            tmp_tps[i] = np.array(est_price)
+         
+        if tps_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/TPS.mat', mdict={'TPS':tmp_tps})
+            tps_tmps_180 = tmp_tps / self.price_forward_adjusted  - 1
+            sio.savemat(DATAPATH+'daily_factor/TPS_180.mat', mdict={'TPS_180':tmp_tps_180})
+        else:
+            tps_original = np.vstack((tps_original, tmp_tps))
+            tps_180_original = tps_original / self.price_forward_adjusted  - 1
+            sio.savemat(DATAPATH+'daily_factor/TPS.mat', mdict={'TPS':tps_original})
+            sio.savemat(DATAPATH+'daily_factor/TPS_180.mat', mdict={'TPS_180':tps_180_original})
+            
+    def __write2wratingupgrade_file(self, datelist, original, stklist):
+        """更新wratingupgrade因子
+        :datelist: 时间序列
+        :original: 原始因子序列
+        :stklist: 股票列表
+        """
+        cursor = self.conn.cursor()
+        tmp_wrating_upgrade = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_info_windcode,s_wrating_upgrade from  AShareStockRatingConsus   WHERE rating_dt==%s and s_wrating_cycle=0263002000' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_info_windcode = ret[0]
+            s_wrating_upgrade = ret[1]
+            wrating_upgrade = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    wrating_upgrade.append(s_wrating_upgrade[idx])
+                else:
+                    wrating_upgrade.append(-1)
+            tmp_wrating_upgrade[i] = np.array(wrating_upgrade)
+         
+        if original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/wrating_upgrade.mat', mdict={'wrating_upgrade':tmp_wrating_upgrade})
+        else:
+            original = np.vstack((original, tmp_wrating_upgrade))
+            sio.savemat(DATAPATH+'daily_factor/wrating_upgrade.mat', mdict={'wrating_upgrade':original})
         
+    def __write2forcast_file(self, datelist, roe_original,
+            pe_original, pb_original, peg_original, stklist):
+        """把盈利预测因子写入文件
+        :datelist: 更新时间序列
+        :roe_original: ROE原始因子序列
+        :pe_original: PE原始因子序列
+        :pb_original: PB原始因子序列
+        :peg_original: PEG原始因子序列
+        :stklist: 股票序列
+        """
+        cursor = self.conn.cursor()
+        tmp_roe = np.zeros((len(datelist),len(stklist)))
+        tmp_pe = np.zeros((len(datelist),len(stklist)))
+        tmp_pb = np.zeros((len(datelist),len(stklist)))
+        tmp_peg = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = "select s_info_windcode,est_roe,est_pe,est_pb,est_peg from  AshareConsensusRollingData   WHERE rolling_type='FY1' and est_dt=" % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 5)
+            s_info_windcode = ret[0]
+            est_roe = ret[1]
+            est_pe = ret[2]
+            est_pb = ret[3]
+            est_peg = ret[4]
+            roe = list()
+            pe = list()
+            pb = list()
+            peg = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    roe.append(est_roe[idx])
+                    pe.append(est_pe[idx])
+                    pb.append(est_pb[idx])
+                    peg.append(est_peg[idx])
+                else:
+                    roe.append(-1)
+                    pe.append(-1)
+                    pb.append(-1)
+                    peg.append(-1)
+            tmp_roe[i] = np.array(roe)
+            tmp_pe[i] = np.array(pe)
+            tmp_pb[i] = np.array(pb)
+            tmp_peg[i] = np.array(peg)
+
+        if roe_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/roe_forcast_FY1.mat', mdict={'roe_forcast_FY1':tmp_roe})
+            sio.savemat(DATAPATH+'daily_factor/pe_forcast_FY1.mat', mdict={'pe_forcast_FY1':tmp_pe})
+            sio.savemat(DATAPATH+'daily_factor/pb_forcast_FY1.mat', mdict={'pb_forcast_FY1':tmp_pb})
+            sio.savemat(DATAPATH+'daily_factor/peg_forcast_FY1.mat', mdict={'roe_forcast_FY1':tmp_peg})
+        else:
+            roe_original = np.vstack((roe_original, tmp_roe))
+            pe_original = np.vstack((pe_original, tmp_pe))
+            pb_original = np.vstack((pb_original, tmp_pb))
+            peg_original = np.vstack((peg_original, tmp_peg))
+            sio.savemat(DATAPATH+'daily_factor/roe_forcast_FY1.mat', mdict={'roe_forcast_FY1':roe_original})
+            sio.savemat(DATAPATH+'daily_factor/pe_forcast_FY1.mat', mdict={'pe_forcast_FY1':pe_original})
+            sio.savemat(DATAPATH+'daily_factor/pb_forcast_FY1.mat', mdict={'pb_forcast_FY1':pb_original})
+            sio.savemat(DATAPATH+'daily_factor/peg_forcast_FY1.mat', mdict={'roe_forcast_FY1':peg_original})
         
+    def __write2forcastfttm_file(self, datelist, roefttm_original,
+            pefttm_original, pbfttm_original, pegfttm_original, stklist):
+        """把盈利预测因子写入文件
+        :datelist: 更新时间序列
+        :roefttm_original: ROE原始因子序列
+        :pefttm_original: PE原始因子序列
+        :pbfttm_original: PB原始因子序列
+        :pegfttm_original: PEG原始因子序列
+        :stklist: 股票序列
+        """
+        cursor = self.conn.cursor()
+        tmp_roe = np.zeros((len(datelist),len(stklist)))
+        tmp_pe = np.zeros((len(datelist),len(stklist)))
+        tmp_pb = np.zeros((len(datelist),len(stklist)))
+        tmp_peg = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = "select s_info_windcode,est_roe,est_pe,est_pb,est_peg from  AshareConsensusRollingData   WHERE rolling_type='FTTM' and est_dt=" % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 5)
+            s_info_windcode = ret[0]
+            est_roe = ret[1]
+            est_pe = ret[2]
+            est_pb = ret[3]
+            est_peg = ret[4]
+            roe = list()
+            pe = list()
+            pb = list()
+            peg = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    roe.append(est_roe[idx])
+                    pe.append(est_pe[idx])
+                    pb.append(est_pb[idx])
+                    peg.append(est_peg[idx])
+                else:
+                    roe.append(-1)
+                    pe.append(-1)
+                    pb.append(-1)
+                    peg.append(-1)
+            tmp_roe[i] = np.array(roe)
+            tmp_pe[i] = np.array(pe)
+            tmp_pb[i] = np.array(pb)
+            tmp_peg[i] = np.array(peg)
+
+        if roe_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/roe_forcast_FTTM.mat', mdict={'roe_forcast_FTTM':tmp_roe})
+            sio.savemat(DATAPATH+'daily_factor/pe_forcast_FTTM.mat', mdict={'pe_forcast_FTTM':tmp_pe})
+            sio.savemat(DATAPATH+'daily_factor/pb_forcast_FTTM.mat', mdict={'pb_forcast_FTTM':tmp_pb})
+            sio.savemat(DATAPATH+'daily_factor/peg_forcast_FTTM.mat', mdict={'roe_forcast_FTTM':tmp_peg})
+        else:
+            roefttm_original = np.vstack((roefttm_original, tmp_roe))
+            pefttm_original = np.vstack((pefttm_original, tmp_pe))
+            pbfttm_original = np.vstack((pbfttm_original, tmp_pb))
+            pegfttm_original = np.vstack((pegfttm_original, tmp_peg))
+            sio.savemat(DATAPATH+'daily_factor/roe_forcast_FTTM.mat', mdict={'roe_forcast_FTTM':roefttm_original})
+            sio.savemat(DATAPATH+'daily_factor/pe_forcast_FTTM.mat', mdict={'pe_forcast_FTTM':pefttm_original})
+            sio.savemat(DATAPATH+'daily_factor/pb_forcast_FTTM.mat', mdict={'pb_forcast_FTTM':pbfttm_original})
+            sio.savemat(DATAPATH+'daily_factor/peg_forcast_FTTM.mat', mdict={'roe_forcast_FTTM':pegfttm_original})
+        
+    def __write2forcastyoy_file(self, datelist, netprofit_original,
+            roeyoy_original, stklist):
+        """把盈利预测因子写入文件
+        :datelist: 更新时间序列
+        :netprofit_original: NETPROFIT原始因子序列
+        :roeyoy_original: ROEYOY原始因子序列
+        :stklist: 股票序列
+        """
+        cursor = self.conn.cursor()
+        tmp_netprofit = np.zeros(len(datelist), len(stklist))
+        tmp_roe = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = "select s_info_windcode,net_profit,est_roe from  AshareConsensusRollingData   WHERE rolling_type='YOY' and est_dt=" % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 3)
+            s_info_windcode = ret[0]
+            net_profit = ret[1]
+            est_roe = ret[2]
+            netprofit = list()
+            roe = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    netprofit.append(net_profit[idx])
+                    roe.append(est_roe[idx])
+                else:
+                    netprofit.append(-1)
+                    roe.append(-1)
+
+            tmp_netprofit[i] = np.array(netprofit)
+            tmp_roe[i] = np.array(roe)
+
+        if netprofit_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/netprofit_forcast_YOY.mat', mdict={'netprofit_forcast_YOY':tmp_netprofit})
+            sio.savemat(DATAPATH+'daily_factor/roe_forcast_YOY.mat', mdict={'roe_forcast_YOY':tmp_roe})
+        else:
+            netprofit_original = np.vstack((netprofit_original, tmp_netprofit))
+            roeyoy_original = np.vstack((roeyoy_original, tmp_roe))
+            sio.savemat(DATAPATH+'daily_factor/netprofit_forcast_YOY.mat', mdict={'netprofit_forcast_YOY':tmp_netprofit})
+            sio.savemat(DATAPATH+'daily_factor/roe_forcast_YOY.mat', mdict={'roe_forcast_YOY':tmp_roe})
+
+    def __write2cagr_file(datelist, netprofit_original, roe_original, stklist):
+        """把CAGR因子写入文件
+        :datelist: 时间序列
+        :netprofit_original: netprofitCAGR的原始数据
+        :roe_original: roeCAGR的原始数据
+        :stklist: 股票列表
+        """
+        cursor = self.conn.cursor()
+        tmp_roe = np.zeros((len(datelist),len(stklist)))
+        tmp_netprofit = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = "select s_info_windcode,net_profit,est_roe from  AshareConsensusRollingData   WHERE rolling_type='CAGR' and est_dt=" % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 3)
+            s_info_windcode = ret[0]
+            net_profit = ret[1]
+            est_roe = ret[2]
+            netprofit = list()
+            roe = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    netprofit.append(net_profit[idx])
+                    roe.append(est_roe[idx])
+                else:
+                    netprofit.append(-1)
+                    roe.append(-1)
+
+            tmp_netprofit[i] = np.array(netprofit)
+            tmp_roe[i] = np.array(roe)
+
+        if netprofit_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/netprofit_forcast_CAGR.mat', mdict={'netprofit_forcast_CAGR':tmp_netprofit})
+            sio.savemat(DATAPATH+'daily_factor/roe_forcast_CAGR.mat', mdict={'roe_forcast_CAGR':tmp_roe})
+        else:
+            netprofit_original = np.vstack((netprofit_original, tmp_netprofit))
+            roe_original = np.vstack((roe_original, tmp_roe))
+            sio.savemat(DATAPATH+'daily_factor/netprofit_forcast_YOY.mat', mdict={'netprofit_forcast_CAGR':netprofit_original})
+            sio.savemat(DATAPATH+'daily_factor/roe_forcast_YOY.mat', mdict={'roe_forcast_CAGR':roe_original})
+
+    def __write2broker_file(datelist, rating_avg_original, rating_net_upgrade_original, rating_instnum, stklist):
+        """把券商评级的因子写入文件
+        :datelist: 时间序列
+        :rating_avg_original: rating_avg原始数据
+        :rating_net_upgrade_original: rating_net_upgrade原始数据
+        :rating_instnum: rating_instum原始数据
+        """
+        
+        cursor = self.conn.cursor()
+        tmp_rating_avg = np.zeros((len(datelist),len(stklist)))
+        tmp_rating_net_upgrade = np.zeros((len(datelist),len(stklist)))
+        tmp_instnum = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_info_windcode,s_wrating_avg,s_wrating_upgrade,s_wrating_downgrade,s_wrating_instnum from  AShareStockRatingConsus   WHERE rating_dt=%s and s_wrating_cycle=0263002000' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 5)
+            s_info_windcode = ret[0]
+            s_wrating_avg = ret[1]
+            s_wrating_upgrade = ret[2]
+            s_wrating_downgrade = ret[3]
+            s_wrating_instum = ret[4]
+            wrating_avg = list()
+            wrating_upgrade = list()
+            wrating_downgrade = list()
+            wrating_instum = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    wrating_avg.append(s_wrating_avg[idx])
+                    wrating_upgrade.append(s_wrating_upgrade[idx])
+                    wrating_downgrade.append(s_wrating_downgrade[idx])
+                    wrating_instum.append(s_wrating_instum[idx])
+                else:
+                    wrating_avg.append(-1)
+                    wrating_upgrade.append(-1)
+                    wrating_downgrade.append(-1)
+                    wrating_instum.append(-1)
+            tmp_rating_avg[i] = np.array(wrating_avg)
+            tmp_rating_net_upgrade[i] = np.array(wrating_upgrade)
+            tmp_instnum[i] = np.array(wrating_instnum)
+
+        if rating_avg_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/rating_avg.mat', mdict={'rating_avg':tmp_rating_avg})
+            sio.savemat(DATAPATH+'daily_factor/rating_net_upgrade.mat', mdict={'rating_net_upgrade':tmp_rating_net_upgrade})
+            sio.savemat(DATAPATH+'daily_factor/rating_instnum.mat', mdict={'rating_instnum':tmp_instnum})
+        else:
+            rating_avg_original = np.vstack((rating_avg_original, tmp_rating_avg))
+            rating_net_upgrade_original = np.vstack((rating_net_upgrade_original, tmp_rating_net_upgrade))
+            rating_instnum_original = np.vstack((rating_instnum, tmp_instnum))
+            sio.savemat(DATAPATH+'daily_factor/rating_avg.mat', mdict={'rating_avg':rating_avg_original})
+            sio.savemat(DATAPATH+'daily_factor/rating_net_upgrade.mat', mdict={'rating_net_upgrade':rating_net_upgrade_original})
+            sio.savemat(DATAPATH+'daily_factor/rating_instnum.mat', mdict={'rating_instnum':rating_instnum_original})
