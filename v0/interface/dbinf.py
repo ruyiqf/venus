@@ -106,17 +106,21 @@ class OracleDbInf(object):
     def db_download_ind_citic(self):
         """中信行业数据下载
         """
+        tdays_data = self.tdays_data 
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+
         ind_code_name_citic = self.__convert_mat2list(sio.loadmat(DATAPATH+'ind_code_name_CITIC.mat')['ind_code_name_CITIC'])
         ind_name_citic = self.__convert_mat2list(sio.loadmat(DATAPATH+'ind_name_CITIC.mat')['ind_name_CITIC'])
         if(os.path.exists(DATAPATH+'ind_of_stock_CITIC.mat')):
-            ind_of_stock_citic = self.__convert_mat2list(sio.loadmat(DATAPATH+'ind_of_stock_CITIC.mat')['ind_of_stock_CITIC'])
+            ind_of_stock_citic = sio.loadmat(DATAPATH+'ind_of_stock_CITIC.mat')['ind_of_stock_CITIC']
             if len(ind_of_stock_citic) < len(self.tdays_data):
-                self.__write2indcitic_file(self.tdays_data[len(ind_of_stock_citic):], ind_code_name_citic, ind_name_citic, ind_of_stock_citic) 
+                self.__write2indcitic_file(tdays_data[len(ind_of_stock_citic):], ind_code_name_citic, ind_name_citic, ind_of_stock_citic, stklist) 
             else:
-                self.log.info('已经最新数据不需要更新')
+                self.log.info('中信行业数据已经最新数据不需要更新')
         else:
             ind_of_stock_citic = np.array([])
-            self.__write2indcitic_file(self.tdays_data, ind_code_name_citic, ind_name_citic, ind_of_stock_citic) 
+            self.__write2indcitic_file(tdays_data, ind_code_name_citic, ind_name_citic, np.array([]), stklist) 
     
     def db_download_tradestatus(self):
         """更新tradestatus表格
@@ -345,6 +349,122 @@ class OracleDbInf(object):
          else:
              self.__write2broker_file(tdays_data, np.array([]), np.array([]), np.array([]), stklist)
 
+    def db_download_valuediff_small_trader_act(self):
+        """更新机构大户散户的占比因子
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/value_diff_small_trader_act.mat')):
+            vdsta = sio.loadmat(DATAPATH+'daily_factor/value_diff_small_trader_act.mat')['value_diff_small_trader_act']
+            vdmta = sio.loadmat(DATAPATH+'daily_factor/value_diff_med_trader_act.mat')['value_diff_med_trader_act']
+            vdlta = sio.loadmat(DATAPATH+'daily_factor/value_diff_large_trader_act.mat')['value_diff_large_trader_act']
+            vdia = sio.loadmat(DATAPATH+'daily_factor/value_diff_institute_act.mat')['value_diff_institute_act']
+
+            odsta = sio.loadmat(DATAPATH+'daily_factor/volume_diff_small_trader_act.mat')['volume_diff_small_trader_act']
+            odmta = sio.loadmat(DATAPATH+'daily_factor/volume_diff_med_trader_act.mat')['volume_diff_med_trader_act']
+            odlta = sio.loadmat(DATAPATH+'daily_factor/volume_diff_large_trader_act.mat')['volume_diff_large_trader_act']
+            odia = sio.loadmat(DATAPATH+'daily_factor/volume_diff_institute_act.mat')['volume_diff_institute_act']
+
+            if(len(vdsta) < len(tdays_data)):
+                self.__write2vdsta_file(tdays_data[len(vdsta):], vdsta, 
+                        vdmta, vdlta, 
+                        vdia, odsta, 
+                        odmta, odlta,
+                        odlta, odia,
+                        stklist)
+            else:
+                self.log.info('机构散户大户成交量占比因子更新完毕')
+         else:
+             self.__write2vdsta_file(tdays_data, np.array([]),
+                     np.array([]), np.array([]),
+                     np.array([]), np.array([]),
+                     np.array([]), np.array([]),
+                     np.array([]), np.array([]),
+                     stklist)
+
+    def db_download_moneyflow_factor(self):
+        """更新流动性因子
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/moneyflow_pct_volume.mat')):
+            mf_pct_volume = sio.loadmat(DATAPATH+'daily_factor/moneyflow_pct_volume.mat')['moneyflow_pct_volume']
+            mf_pct_value = sio.loadmat(DATAPATH+'daily_factor/moneyflow_pct_value.mat')['moneyflow_pct_value']
+            if(len(vdsta) < len(tdays_data)):
+                self.__write2mfpct_file(tdays_data[len(vdsta):], mf_pct_volume, 
+                        mf_pct_value, stklist)
+            else:
+                self.log.info('流动性因子更新完毕')
+         else:
+             self.__write2mfpct_file(tdays_data, np.array([]),
+                     np.array([]), stklist)
+
+    def db_download_ZZ500HS300weight_factor(self):
+        """更新指数权重股
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/ZZ500_weight.mat')):
+            zz500_weight = sio.loadmat(DATAPATH+'daily_factor/ZZ500_weight.mat')['ZZ500_weight']
+            hs300_weight = sio.loadmat(DATAPATH+'daily_factor/HS300_weight.mat')['HS300_weight']
+            if(len(zz500_weight) < len(tdays_data)):
+                self.__write2zz500hs300weight_file(tdays_data[len(vdsta):], zz500weight, 
+                        hs300weight, stklist)
+            else:
+                self.log.info('权重因子更新完毕')
+         else:
+             self.__write2zz500hs300weight_file(tdays_data, np.array([]),
+                     np.array([]), stklist)
+
+    def db_download_50weight_factor(self):
+        """更新上证50权重
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/SZ50_weight.mat')):
+            sz50_weight = sio.loadmat(DATAPATH+'daily_factor/SZ50_weight.mat')['SZ50_weight']
+            if(len(sz50_weight) < len(tdays_data)):
+                self.__write2sz50weight_file(tdays_data[len(vdsta):], sz50weight, stklist)
+            else:
+                self.log.info('50权重因子更新完毕')
+         else:
+             self.__write2sz50weight_file(tdays_data, np.array([]), stklist)
+
+    def db_download_listdate_factor(self):
+        """更新上市时间
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'listdate.mat')):
+            listdate = sio.loadmat(DATAPATH+'listdate.mat')['listdate']
+            listdate = [elt[0] for elt in listdate[0]]
+            if(len(listdate) < len(stklist)):
+                self.__write2listdate_file(listdate, stklist)
+            else:
+                self.log.info('上市时间更新完毕')
+         else:
+             self.__write2listdate_file(np.array([]), stklist)
+    
+    def db_download_industry29_factor(self):
+        """更新29个行业因子
+        """
+        tdays_data = self.tdays_data
+        indlist = sio.loadmat(DATAPATH+'ind_code_name_CITIC_29.mat')['ind_code_name_CITIC_29']
+        indlist = [elt[0][0] for elt in indlist]
+        if(os.path.exists(DATAPATH+'indIndex_CITIC_29.mat')):
+            indindex_citic29 = sio.loadmat(DATAPATH+'indIndex_CITIC_29.mat')['indIndex_CITIC_29']
+            if(len(indindex_citic29) < len(tdays_data)):
+                self.__write2ind29_file(tdays_data[len(indindex_citic29):], indindex_citic29, indlist)
+            else:
+                self.log.info('上市时间更新完毕')
+         else:
+             self.__write2ind29_file(tdays_data, np.array([]), indlist)
+        
     def __convert_mat2list(self, mat_ndarray):
         """把mat的高维数据转换成list类型
         :mat_ndarray: mat数据格式
@@ -406,8 +526,13 @@ class OracleDbInf(object):
             original = np.delete(original, [0], axis=0)
         sio.savemat(DATAPATH+'A_ST_stock_d', mdict={'A_ST_stock_d': original})
 
-    def __write2indcitic_file(self, datelist, ind_code_name, ind_name, original):
+    def __write2indcitic_file(self, datelist, ind_code_name, ind_name, original, stklist):
         """写入中信行业分类
+        :datelist: 时间序列
+        :ind_code_name: 行业代码列表数据
+        :ind_name: 行业名称列表数据
+        :original: 原始股票行业数据序列
+        :stklist: 股票列表
         """
         pass
     
@@ -1118,3 +1243,305 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'daily_factor/rating_avg.mat', mdict={'rating_avg':rating_avg_original})
             sio.savemat(DATAPATH+'daily_factor/rating_net_upgrade.mat', mdict={'rating_net_upgrade':rating_net_upgrade_original})
             sio.savemat(DATAPATH+'daily_factor/rating_instnum.mat', mdict={'rating_instnum':rating_instnum_original})
+
+    def __write2vdsta_file(self, datelist, vdsta_original, vdmta_original,
+            vdlta_original, vdia_original, odsta_original, odmta_original,
+            odlta_original, odia_original, stklist):
+        """把机构散户大户成交量占比写入文件
+        :datelist: 时间序列
+        :vdsta_original: vdsta原始数据序列
+        :vdmta_original: vdmta原始数据序列
+        :vdlta_original: vdlta原始数据序列
+        :vdia_original: vdia原始数据序列
+        :odsta_original: odsta原始数据序列
+        :odmta_original: odmta原始数据序列
+        :odlta_original: odlta原始数据序列
+        :odia_original: odia原始数据序列
+        :stklist: 股票列表
+        """
+
+        cursor = self.conn.cursor()
+        tmp_vdsta = np.zeros((len(datelist),len(stklist)))
+        tmp_vdmta = np.zeros((len(datelist),len(stklist)))
+        tmp_vdlta = np.zeros((len(datelist),len(stklist)))
+        tmp_vdia = np.zeros((len(datelist),len(stklist)))
+
+        tmp_odsta = np.zeros((len(datelist),len(stklist)))
+        tmp_odmta = np.zeros((len(datelist),len(stklist)))
+        tmp_odlta = np.zeros((len(datelist),len(stklist)))
+        tmp_odia = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_info_windcode,value_diff_small_trader_act,value_diff_med_trader_act,value_diff_large_trader_act,value_diff_institute_act,volume_diff_small_trader_act,volume_diff_med_trader_act,volume_diff_large_trader_act,volume_diff_institute_act  from  AShareMoneyflow   WHERE trade_dt=' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 9)
+            s_info_windcode = ret[0]
+            value_diff_small_trader_act = ret[1]
+            value_diff_med_trader_act = ret[2]
+            value_diff_large_trader_act = ret[3]
+            value_diff_institude_act = ret[4]
+            
+            volume_diff_small_trader_act = ret[5]
+            volume_diff_med_trader_act = ret[6]
+            volume_diff_large_trader_act = ret[7]
+            volume_diff_institude_act = ret[8]
+        
+            vdsta = list()
+            vdmta = list()
+            vdlta = list()
+            vdia = list()
+            odsta = list()
+            odmta = list()
+            odlta = list()
+            odia = list()
+            
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    vdsta.append(value_diff_small_trader_act[idx])
+                    vdmta.append(value_diff_med_trader_act[idx])
+                    vdlta.append(value_diff_large_trader_act[idx])
+                    vdia.append(value_diff_institude_act[idx])
+                    
+                    odsta.append(volume_diff_small_trader_act[idx])
+                    odmta.append(volume_diff_med_trader_act[idx])
+                    odlta.append(volume_diff_large_trader_act[idx])
+                    odia.append(volume_diff_institude_act[idx])
+                else:
+                    vdsta.append(-1)
+                    vdmta.append(-1)
+                    vdlta.append(-1)
+                    vdia.append(-1)
+                    
+                    odsta.append(-1)
+                    odmta.append(-1)
+                    odlta.append(-1)
+                    odia.append(-1)
+
+            tmp_vdsta[i] = np.array(vdsta)
+            tmp_vdmta[i] = np.array(vdmta)
+            tmp_vdlta[i] = np.array(vdlta)
+            tmp_vdia[i] = np.array(vdia)
+
+            tmp_odsta[i] = np.array(odsta)
+            tmp_odmta[i] = np.array(odmta)
+            tmp_odlta[i] = np.array(odlta)
+            tmp_odia[i] = np.array(odia)
+
+        if vdsta_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/value_diff_small_trader_act.mat', mdict={'value_diff_small_trader_act':tmp_vdsta})
+            sio.savemat(DATAPATH+'daily_factor/value_diff_med_trader_act.mat', mdict={'value_diff_met_trader_act':tmp_vdmta})
+            sio.savemat(DATAPATH+'daily_factor/value_diff_large_trader_act.mat', mdict={'value_diff_large_trader_act':tmp_vdlta})
+            sio.savemat(DATAPATH+'daily_factor/value_diff_institude_act.mat', mdict={'value_diff_institute_act':tmp_vdia})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_small_trader_act.mat', mdict={'volume_diff_small_trader_act':tmp_odsta})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_med_trader_act.mat', mdict={'volume_diff_met_trader_act':tmp_odmta})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_large_trader_act.mat', mdict={'volume_diff_large_trader_act':tmp_odlta})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_institude_act.mat', mdict={'volume_diff_institute_act':tmp_odia})
+        else:
+            vdsta_original = np.vstack((vdsta_original, tmp_vdsta))
+            vdmta_original = np.vstack((vdmta_original, tmp_vdmta))
+            vdlta_original = np.vstack((vdlta_original, tmp_vdlta))
+            vdia_original = np.vstack((vdia_original, tmp_vdia))
+            odsta_original = np.vstack((odsta_original, tmp_odsta))
+            odmta_original = np.vstack((odmta_original, tmp_ovdmta))
+            odlta_original = np.vstack((odlta_original, tmp_odlta))
+            odia_original = np.vstack((odia_original, tmp_odia))
+            sio.savemat(DATAPATH+'daily_factor/value_diff_small_trader_act.mat', mdict={'value_diff_small_trader_act':vdsta_original})
+            sio.savemat(DATAPATH+'daily_factor/value_diff_med_trader_act.mat', mdict={'value_diff_met_trader_act':vdmta_original})
+            sio.savemat(DATAPATH+'daily_factor/value_diff_large_trader_act.mat', mdict={'value_diff_large_trader_act':vdlta_original})
+            sio.savemat(DATAPATH+'daily_factor/value_diff_institude_act.mat', mdict={'value_diff_institute_act':vdia_original})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_small_trader_act.mat', mdict={'volume_diff_small_trader_act':odsta_original})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_med_trader_act.mat', mdict={'volume_diff_met_trader_act':odmta_original})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_large_trader_act.mat', mdict={'volume_diff_large_trader_act':odlta_original})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_institude_act.mat', mdict={'volume_diff_institute_act':odia_original})
+
+    def __write2mfpct_file(self,  datelist, mf_pct_volume_original, mf_pct_value_original, stklist):
+        """把流动性因子写入文件
+        :datelist: 时间序列
+        :mf_pct_volume_original: 成交量原始数据序列
+        :mf_pct_value_original: 成交额原始数据序列
+        :stklist: 股票列表
+        """
+        
+        cursor = self.conn.cursor()
+        tmp_mf_pct_volume = np.zeros((len(datelist),len(stklist)))
+        tmp_mf_pct_value = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_info_windcode,moneyflow_pct_volume,moneyflow_pct_value  from  AShareMoneyflow   WHERE trade_dt=' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 3)
+            s_info_windcode = ret[0]
+            moneyflow_pct_volume = ret[1]
+            moneyflow_pct_value = ret[2]
+            mf_pct_volume = list()
+            mf_pct_value = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    mf_pct_volume.append(moneyflow_pct_volume[idx])
+                    mf_pct_value.append(moneyflow_pct_value[idx])
+                else:
+                    mf_pct_volume.append(-1)
+                    mf_pct_value.append(-1)
+            tmp_mf_pct_volume[i] = np.array(mf_pct_volume)
+            tmp_mf_pct_value[i] = np.array(mf_pct_value)
+
+        if mf_pct_volume_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/moneyflow_pct_volume.mat', mdict={'moneyflow_pct_volume':tmp_mf_pct_volume})
+            sio.savemat(DATAPATH+'daily_factor/moneyflow_pct_value.mat', mdict={'moneyflow_pct_value':tmp_mf_pct_value})
+        else:
+            mf_pct_volume_original = np.vstack((mf_pct_volume_original, tmp_mf_pct_volume))
+            mf_pct_value_original = np.vstack((mf_pct_value_original, tmp_mf_pct_value))
+            sio.savemat(DATAPATH+'daily_factor/moneyflow_pct_volume.mat', mdict={'moneyflow_pct_volume':mf_pct_volume_original})
+            sio.savemat(DATAPATH+'daily_factor/moneyflow_pct_value.mat', mdict={'moneyflow_pct_value':mf_pct_value_original})
+
+    def __write2zz500hs300weight_file(self, datelist, zz500weight_original, hs300weight_original, stklist):
+        """把指数权重因子写入文件
+        :datelist: 时间序列
+        :zz500weight_original: zz500权重原始因子
+        :hs300weight_original: hs300权重原始因子
+        :stklist: 股票列表
+        """
+        cursor = self.conn.cursor()
+        tmp_zz500weight = np.zeros((len(datelist),len(stklist)))
+        tmp_hs300weight = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_con_windcode,i_weight FROM AINDEXHS300CloseWeight WHERE  TRADE_DT =' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_con_windcode = ret[0]
+            i_weight = ret[1]
+            hs300weight = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    hs300weight.append(i_weight[idx])
+                else:
+                    hs300weight.append(-1)
+            
+            sql = 'select s_con_windcode,weight FROM AINDEXCSI500Weight WHERE  TRADE_DT =' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_con_windcode = ret[0]
+            weight = ret[1]
+            zz500weight = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    zz500weight.append(weight[idx])
+                else:
+                    zz500weight.append(-1)
+
+            tmp_zz500weight[i] = np.array(zz500weight)
+            tmp_hs300weight[i] = np.array(hs300weight)
+
+        if zz500weight_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/ZZ500_weight.mat', mdict={'ZZ500_weight':tmp_zz500weight})
+            sio.savemat(DATAPATH+'daily_factor/HS300_weight.mat', mdict={'HS300_weight':tmp_hs300weight})
+        else:
+            zz500weight_original = np.vstack((zz500weight_original, tmp_zz500weight))
+            hs300weight_original = np.vstack((hs300weight_original, tmp_hs300weight))
+            sio.savemat(DATAPATH+'daily_factor/ZZ500_weight.mat', mdict={'ZZ500_weight':zz500weight_original})
+            sio.savemat(DATAPATH+'daily_factor/HS300_weight.mat', mdict={'HS300_weight':hs300weight_original})
+
+    def __write2sz50weight_file(self, datelist, sz50weight_original, stklist):
+        """把50权重因子写入文件
+        :datelist: 时间序列
+        :sz50weight_original: 50权重因子原始数据
+        :stklist: 股票列表
+        """
+        cursor = self.conn.cursor()
+        tmp_sz50weight = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_con_windcode,weight FROM AIndexSSE50Weight WHERE  TRADE_DT =' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_con_windcode = ret[0]
+            weight = ret[1]
+            sz50weight = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    sz50weight.append(weight[idx])
+                else:
+                    sz50weight.append(-1)
+            
+            tmp_sz50weight[i] = np.array(sz50weight)
+
+        if sz50weight_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/SZ50_weight.mat', mdict={'SZ50_weight':tmp_sz50weight})
+        else:
+            sz50weight_original = np.vstack((sz50weight_original, tmp_sz50weight))
+            sio.savemat(DATAPATH+'daily_factor/SZ50_weight.mat', mdict={'SZ50_weight':sz50weight_original})
+        
+    def __write2listdate_file(self, listdate_original, stklist):
+        """把上市时间因子写入文件
+        :listdate_original: 上市时间原始数据
+        :stklist: 股票列表
+        """
+        cursor = self.conn.cursor()
+        tmp_listdate = np.zeros(len(stklist))
+
+        sql = 'select s_info_windcode,s_info_listdate from  AShareDescription'
+        cursor.execute(sql)
+        rs = cursor.fetchall()
+        ret = self.__convert_dbdata2tuplelist(rs, 2)
+        s_info_windcode = ret[0]
+        s_info_listdate = ret[1]
+        for k in range(len(stklist)):
+            if stklist[k] in s_info_windcode:
+                idx = s_info_windcode.index(stklist[k]) 
+                tmp_listdate[k] = (s_info_listdate[idx])
+            else:
+                tmp_listdate[k] = float('nan')
+        
+        if listdate_original.size == 0:
+            sio.savemat(DATAPATH+'listdate.mat', mdict={'listdate':tmp_listdate})
+        else:
+            listdate_original = np.concatenate([listdate_original, tmp_listdate], axis=0)
+            sio.savemat(DATAPATH+'listdate.mat', mdict={'listdata':listdate_original})
+
+    def __write2ind29_file(self, datelist, ind29_original, indlist) 
+        """把29个中信行业数据写入文件
+        :datelist: 时间序列
+        :ind29_original: 29个行业原始数据
+        :indlist: 29个中信行业列表
+        """
+        cursor = self.conn.cursor()
+        tmp_indcitic_29 = np.zeros(len(indlist))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_info_windcode,S_DQ_CLOSE from AIndexIndustriesEODCITICS    WHERE trade_dt=%s' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_info_windcode = ret[0]
+            S_DQ_CLOSE = ret[1]
+            indcitic29 = list()
+            for k in range(len(indlist)):
+                if indlist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    indcitic29.append(S_DQ_CLOSE[idx])
+                else:
+                    indcitic29.append(-1)
+            tmp_indcitic_29[i] = np.array(indcitic29)
+
+        if ind29_original.size == 0:
+            sio.savemat(DATAPATH+'indIndex_CITIC_29.mat', mdict={'indIndex_CITIC_29':tmp_indcitic_29})
+        else:
+            ind29_original = np.vstack((ind29_original, tmp_indcitic_29))
+            sio.savemat(DATAPATH+'indIndex_CITIC_29.mat', mdict={'indIndex_CITIC_29':ind29_original})
+        

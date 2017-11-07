@@ -217,7 +217,7 @@ class WindPyInf(object):
         if(os.path.exists(DATAPATH+'daily_factor/MV.mat')):
             mv = sio.loadmat(DATAPATH+'daily_factor/MV.mat')['MV']
             if(len(mv) < len(tdays_data)):
-                self.__write2marketvalue_file(tdays.data[len(mv):], mv, stklist)
+                self.__write2marketvalue_file(tdays_data[len(mv):], mv, stklist)
             else:
                 self.log.info('市值因子已经更新到最新')
         else:
