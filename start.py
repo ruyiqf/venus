@@ -23,9 +23,12 @@ def main():
     #df.wpi.wind_download_stkind()
     #df.wpi.wind_download_sz50_ratio()
     #df.odi.db_download_stock_trade_able()
+    #df.odi.db_download_tradestatus()
     #df.odi.db_download_updownlimit_status()
-    df.odi.db_download_
-    
+    #df.odi.db_download_price_relate_factor()
+    #df.odi.db_download_price_factor()
+    #df.odi.db_download_bescfp_factor()
+    df.odi.db_download_tps_factor()
 
 if __name__ == '__main__':
     main()

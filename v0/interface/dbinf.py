@@ -76,6 +76,9 @@ class OracleDbInf(object):
         if(os.path.exists(DATAPATH+'A_ST_stock_d.mat')):
             A_ST_stock_d = sio.loadmat(DATAPATH+'A_ST_stock_d.mat')['A_ST_stock_d']
             if len(A_ST_stock_d) < len(tdays_data):
+                colnum = np.shape(A_ST_stock_d)[1]
+                if(colnum < len(stklist)):
+                    A_ST_stock_d = self.__compensate_original_column(A_ST_stock_d, len(stklist) - colnum)
                 self.__write2aststockd_file(stklist,
                     tdays_data[len(A_ST_stock_d):len(tdays_data)],
                     A_ST_stock_d)
@@ -131,12 +134,15 @@ class OracleDbInf(object):
         if(os.path.exists(DATAPATH+'tradestatus.mat')):
             tradestatus = sio.loadmat(DATAPATH+'tradestatus.mat')['tradestatus']
             if len(tradestatus) < len(tdays_data):
-                self.__write2stock_tradestatus_file(tdays_data[len(tradestatus):],
+                colnum = np.shape(tradestatus)[1]
+                if(colnum < len(stklist)):
+                    tradestatus = self.__compensate_original_column(tradestatus, len(stklist) - colnum)
+                self.__write2tradestatus_file(tdays_data[len(tradestatus):],
                         tradestatus, stklist)
             else:
                 self.log.info('已经更新tradestatus表')
         else:
-            self.__write2stock_tradestatus_file(tdays_data, np.array([]), stklist)
+            self.__write2tradestatus_file(tdays_data, np.array([]), stklist)
 
     def db_download_updownlimit_status(self):
         """更新涨停状态表
@@ -147,6 +153,9 @@ class OracleDbInf(object):
         if(os.path.exists(DATAPATH+'up_down_limit_status.mat')):
             ud_limit_status = sio.loadmat(DATAPATH+'up_down_limit_status.mat')['up_down_limit_status']
             if len(ud_limit_status) < len(tdays_data):
+                colnum = np.shape(ud_limit_status)[1]
+                if(colnum < len(stklist)):
+                    ud_limit_status = self.__compensate_original_column(ud_limit_status, len(stklist) - colnum)
                 self.__write2udlimitstatus_file(tdays_data[len(ud_limit_status):],
                         ud_limit_status, stklist)
             else:
@@ -167,15 +176,20 @@ class OracleDbInf(object):
                 volume = sio.loadmat(DATAPATH+'volume.mat')['volume']
                 amount = sio.loadmat(DATAPATH+'amount.mat')['amount']
                 TR = sio.loadmat(DATAPATH+'TR.mat')['TR']
+                price_original = self.__align_column(price_original, stklist)
+                adjfactor = self.__align_column(adjfactor, stklist)
+                volume = self.__align_column(volume, stklist)
+                amount = self.__align_column(amount, stklist)
+                TR = self.__align_column(TR, stklist)
                 self.__write2price_factor_file(tdays_data[len(price_original):], price_original,
                         adjfactor, volume,
-                        amount, TR, stklsit)
+                        amount, TR, stklist)
             else:
                 self.log.info('价格相关的数据因子已经更新完毕')
         else:
             self.__write2price_factor_file(tdays_data, price_original,
                     adjfactor, volume,
-                    amount, TR, stklsit)
+                    amount, TR, stklist)
 
     def db_download_price_factor(self):
         """更新价格因子最高价最低价开盘价
@@ -188,6 +202,9 @@ class OracleDbInf(object):
             if(len(open_original) < len(tdays_data)):
                 high_original = sio.loadmat(DATAPATH+'high_original.mat')['high_original']
                 low_original = sio.loadmat(DATAPATH+'low_original.mat')['low_original']
+                open_original = self.__align_column(open_original, stklist)
+                high_original = self.__align_column(high_original, stklist)
+                low_original = self.__align_column(low_original, stklist)
                 self.__write2price_file(tdays_data[len(open_original):], open_original,
                                         high_original, low_original,
                                         stklist)
@@ -204,20 +221,20 @@ class OracleDbInf(object):
         tdays_data = self.tdays_data
         stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
         stklist = [elt[1][0] for elt in stklist]
+        pfa = sio.loadmat(DATAPATH+'price_forward_adjusted.mat')['price_forward_adjusted']
         if(os.path.exists(DATAPATH+'daily_factor/TPS.mat')):
             tps = sio.loadmat(DATAPATH+'daily_factor/TPS.mat')['TPS']
             if(len(tps) < len(tdays_data)):
-                tps_180_original = sio.loadmat(DATAPATH+'daily_factor/TPS_180')['TPS_180']
-                res_tps_180_original = sio.loadmat(DATAPATH+'daily_factor/res_TPS_180.mat')['res_TPS_180']
-                self.__write2tps_file(tdays_data[len(tps):], tps_original,
-                                      tps_180_original, res_tps_180_original,
-                                      stklist)
+                tps_180 = sio.loadmat(DATAPATH+'daily_factor/TPS_180')['TPS_180']
+                tps = self.__align_column(tps, stklist) 
+                tps_180 = self.__align_column(tps_180, stklist)
+                self.__write2tps_file(tdays_data[len(tps):], tps,
+                                      tps_180, stklist, pfa)
             else:
                 self.log.info('TPS因子已经更新完毕')
         else:
             self.__write2tps_file(tdays_data, np.array([]),
-                                  np.array([]), np.array([]),
-                                  stklist)
+                                  np.array([]), stklist, pfa)
             
     def db_download_wrating90_factor(self):
         """更新wrating_upgrade90天
@@ -300,12 +317,16 @@ class OracleDbInf(object):
         tdays_data = self.tdays_data
         stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
         stklist = [elt[1][0] for elt in stklist]
-        if(os.path.exists(DATAPATH+'BP.mat')):
-            BP = sio.loadmat(DATAPATH+'BP.mat')['BP']
+        if(os.path.exists(DATAPATH+'daily_factor/BP.mat')):
+            BP = sio.loadmat(DATAPATH+'daily_factor/BP.mat')['BP']
             if(len(BP) < len(tdays_data)):
-                EP = sio.loadmat(DATAPATH+'EP.mat')['EP']
-                SP = sio.loadmat(DATAPATH+'SP.mat')['SP']
-                CFP = sio.loadmat(DATAPATH+'CFP.mat')['CFP']
+                EP = sio.loadmat(DATAPATH+'daily_factor/EP.mat')['EP']
+                SP = sio.loadmat(DATAPATH+'daily_factor/SP.mat')['SP']
+                CFP = sio.loadmat(DATAPATH+'daily_factor/CFP.mat')['CFP']
+                BP = self.__align_column(BP, stklist)
+                EP = self.__align_column(EP, stklist)
+                SP = self.__align_column(SP, stklist)
+                CFP = self.__align_column(CFP, stklist)
                 self.__write2bescfp_file(tdays_data[len(BP):],
                 BP, EP, SP, CFP, stklist)
             else:
@@ -548,6 +569,28 @@ class OracleDbInf(object):
             for j in range(elenum):
                 ret[j].append(dbdata[i][j])
         return ret
+    
+    def __compensate_original_column(self, original, columnnum):
+        """补足原始数据的列宽
+        :original: 原始矩阵数据
+        :columnnum: 需要补足的列宽数目
+        """
+        rownum = np.shape(original)[0]
+        for i in range(columnnum):
+            s = Series(np.zeros(rownum))
+            col = self.__convert_row2column(s.replace(0, np.nan).values)
+            original = np.concatenate([original, col], axis=1)
+        return original
+
+    def __align_column(self, original, target):
+        """判断是否需要补足数据的列宽
+        :original: 原始数据
+        :target: 目标数据
+        """
+        if len(original) < len(target):
+            colnum = np.shape(original)[1]
+            original = self.__compensate_original_column(original, len(target) - colnum)
+        return original
         
     def __write2stock_trade_able_file(self, datelist, original, stklist):
         """更新股票交易列表的状态
@@ -606,7 +649,7 @@ class OracleDbInf(object):
         :original: 原有数据序列
         :stklist: 股票列表
         """
-        tmp_array = np.zeros(len(stklist)) 
+        tmp_array = np.zeros((len(datelist), len(stklist)))
         cursor = self.conn.cursor()
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
@@ -628,9 +671,8 @@ class OracleDbInf(object):
                     else:
                         data.append(0)
                 else:
-                    data.append(0)
-            tmp_array = np.vstack((tmp_array, np.array(data)))
-        np.delete(tmp_array, [0], axis=0)
+                    data.append(np.nan)
+            tmp_array[i] = np.array(data)
         if original.size == 0:
             sio.savemat(DATAPATH+'tradestatus.mat', mdict={'tradestatus':tmp_array})
         else:
@@ -682,11 +724,11 @@ class OracleDbInf(object):
         :stklist_original: 股票代码
         """
         cursor = self.conn.cursor()
-        tmp_close = np.zeros(len(stklist))
-        tmp_adjfactor = np.zeros(len(stklist))
-        tmp_volume = np.zeros(len(stklist))
-        tmp_amount = np.zeros(len(stklist))
-        tmp_tr = np.zeros(len(stklist))
+        tmp_close = np.zeros((len(datelist), len(stklist)))
+        tmp_adjfactor = np.zeros((len(datelist), len(stklist)))
+        tmp_volume = np.zeros((len(datelist), len(stklist)))
+        tmp_amount = np.zeros((len(datelist), len(stklist)))
+        tmp_tr = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
             sql = 'select s_info_windcode,s_dq_close,s_dq_adjfactor,s_dq_volume,s_dq_amount from  AShareEODPrices   WHERE trade_dt=%s'%sdate
@@ -710,16 +752,18 @@ class OracleDbInf(object):
                     volume.append(s_dq_volume[idx]*100)
                     amount.append(s_dq_amount[idx]*1000)
                 else:
-                    close.append(-1)
-                    adjfactor.append(-1)
-                    volume.append(-1)
-                    amount.append(-1)
-            tmp_close = np.vstack((tmp_close, np.array(close)))
-            tmp_adjfactor = np.vstack((tmp_adjfacor, np.array(adjfactor)))
-            tmp_volume = np.vstack((tmp_volume, np.array(volume)))
-            tmp_amount = np.vstack((tmp_amount, np.array(amount)))
+                    close.append(np.nan)
+                    adjfactor.append(np.nan)
+                    volume.append(np.nan)
+                    amount.append(np.nan)
+
+            tmp_close[i] = np.array(close)
+            tmp_adjfactor[i] = np.array(adjfactor)
+            tmp_volume[i] = np.array(volume)
+            tmp_amount[i] = np.array(amount)
+
             sql = 'select s_info_windcode,turnover_d from  AShareYield   WHERE trade_dt= %s'%sdate
-            cursor = execute(sql)
+            cursor.execute(sql)
             rs = cursor.fetchall()
             ret = self.__convert_dbdata2tuplelist(rs, 2)
             s_info_windcode = ret[0]
@@ -730,16 +774,10 @@ class OracleDbInf(object):
                     idx = s_info_windcode.index(stklist[k])
                     turnover.append(turnover_d[idx])
                 else:
-                    turnover.append(float('nan'))
+                    turnover.append(np.nan)
 
             turnover = Series(turnover).fillna(method='ffill').values
-            tmp_tr = np.vstack((tmp_tr, turnover))
-                    
-        np.delete(tmp_close, [0], axis=0)
-        np.delete(tmp_adjfactor, [0], axis=0)
-        np.delete(tmp_volume, [0], axis=0)
-        np.delete(tmp_amount, [0], axis=0)
-        np.delete(tmp_tr, [0], axis=0)
+            tmp_tr[i] = turnover
 
         if price_original.size == 0:
             sio.savemat(DATAPATH+'price_original.mat', mdict={'price_original':tmp_close})
@@ -768,7 +806,9 @@ class OracleDbInf(object):
             price_forward_adjusted[i] = price_original[i] * adjfactor_original[i] / adjfactor_original[-1]
         self.price_forward_adjusted = price_forward_adjusted 
         self.adjfactor = adjfactor_original
-        sio.savemat(DATAPATH+'daily_factor/price_daily_1.mat', mdict={'price_daily_1.mat':price_forward_adjusted})
+
+        sio.savemat(DATAPATH+'price_forward_adjusted.mat', mdict={'price_forward_adjusted':price_forward_adjusted})
+        sio.savemat(DATAPATH+'daily_factor/price_daily_1.mat', mdict={'price_daily_1':price_original})
 
     def __write2price_file(self, datelist, open_original, high_original, low_original, stklist):
         """把价格因子写入文件
@@ -802,20 +842,20 @@ class OracleDbInf(object):
                     dq_high.append(s_dq_high[idx])
                     dq_low.append(s_dq_low[idx])
                 else:
-                    dq_open.append(float('nan'))
-                    dq_high.append(float('nan'))
-                    dq_low.append(float('nan'))
+                    dq_open.append(np.nan)
+                    dq_high.append(np.nan)
+                    dq_low.append(np.nan)
 
-            dq_open = Series(dp_open).fillna(method='ffill').values 
-            dp_high = Series(dp_high).fillna(method='ffill').values
-            dp_low = Series(dp_low).fillna(method='ffill').values
+            dq_open = Series(dq_open).fillna(method='ffill').values 
+            dq_high = Series(dq_high).fillna(method='ffill').values
+            dq_low = Series(dq_low).fillna(method='ffill').values
             tmp_open[i] = np.array(dq_open)
             tmp_high[i] = np.array(dq_high)
             tmp_low[i] = np.array(dq_low)
         if open_original.size == 0:
             sio.savemat(DATAPATH+'open_original.mat', mdict={'open_original':tmp_open})
-            sio.savemat(DATAPATH+'high_original.mat', mdict={'open_original':tmp_high})
-            sio.savemat(DATAPATH+'low_original.mat', mdict={'open_original':tmp_low})
+            sio.savemat(DATAPATH+'high_original.mat', mdict={'high_original':tmp_high})
+            sio.savemat(DATAPATH+'low_original.mat', mdict={'low_original':tmp_low})
             open_original = np.array(np.shape(tmp_open))
             open_original = tmp_open
             high_original = np.array(np.shape(tmp_hight))
@@ -826,15 +866,16 @@ class OracleDbInf(object):
             open_original = np.vstack((open_original, tmp_open))
             high_original = np.vstack((high_original, tmp_high))
             low_original = np.vstack((low_original, tmp_low))
-            sio.savemat(DATAPATH+'open_original.mat', mdict={'open_origianl':open_original})
-            sio.savemat(DATAPATH+'high_original.mat', mdict={'high_origianl':high_original})
-            sio.savemat(DATAPATH+'low_original.mat', mdict={'low_origianl':low_original})
+            sio.savemat(DATAPATH+'open_original.mat', mdict={'open_original':open_original})
+            sio.savemat(DATAPATH+'high_original.mat', mdict={'high_original':high_original})
+            sio.savemat(DATAPATH+'low_original.mat', mdict={'low_original':low_original})
 
+        """
         #计算各种前复权的价格
         open_forward_adjusted = np.zeros(np.shape(open_original))
         high_forward_adjusted = np.zeros(np.shape(high_original))
         low_forward_adjusted = np.zeros(np.shape(low_original))
-        for i in range(open_original):
+        for i in range(len(open_original)):
             open_forward_adjusted = open_original[i] * self.adjfactor[i] / self.adjfactor[-1]
             high_forward_adjusted = high_original[i] * self.adjfactor[i] / self.adjfactor[-1]
             low_forward_adjusted = low_original[i] * self.adjfactor[i] / self.adjfactor[-1]
@@ -842,7 +883,8 @@ class OracleDbInf(object):
         sio.savemat(DATAPATH+'open_forward_adjusted.mat', mdict={'open_forward_adjusted':open_forward_adjusted})
         sio.savemat(DATAPATH+'high_forward_adjusted.mat', mdict={'high_forward_adjusted':high_forward_adjusted})
         sio.savemat(DATAPATH+'low_forward_adjusted.mat', mdict={'low_forward_adjusted':low_forward_adjusted})
-            
+        """
+
     def __write2bescfp_file(self, datelist, bp_original,
         ep_original, sp_original, cfp_original, stklist):
         """把基本面因子写入文件
@@ -876,15 +918,20 @@ class OracleDbInf(object):
             for k in range(len(stklist)):
                 if stklist[k] in s_info_windcode:
                     idx = s_info_windcode.index(stklist[k]) 
-                    bp.append(s_val_pb_new[idx])
-                    ep.append(s_val_pe_ttm[idx])
-                    sp.append(s_val_ps_ttm[idx])
-                    cfp.append(s_val_pcf_ocfttm[idx])
+                    bp.append(np.nan if s_val_pb_new[idx] == None else s_val_pb_new[idx])
+                    ep.append(np.nan if s_val_pe_ttm[idx] == None else s_val_pe_ttm[idx])
+                    sp.append(np.nan if s_val_ps_ttm[idx] == None else s_val_ps_ttm[idx])
+                    cfp.append(np.nan if s_val_pcf_ocfttm[idx] == None else s_val_pcf_ocfttm[idx])
+                else:
+                    bp.append(np.nan)
+                    ep.append(np.nan)
+                    sp.append(np.nan)
+                    cfp.append(np.nan)
 
-            tmp_bp[i] = 1.0/np.array(bp)
-            tmp_ep[i] = 1.0/np.array(ep)
-            tmp_sp[i] = 1.0/np.array(sp)
-            tmp_cfp[i] = 1.0/np.array(cfp)
+            tmp_bp[i] = 1.0 / np.array(bp)
+            tmp_ep[i] = 1.0 / np.array(ep)
+            tmp_sp[i] = 1.0 / np.array(sp)
+            tmp_cfp[i] = 1.0 / np.array(cfp)
 
         if bp_original.size == 0:
             sio.savemat(DATAPATH+'daily_factor/BP.mat', mdict={'BP':tmp_bp})
@@ -903,18 +950,17 @@ class OracleDbInf(object):
 
 
     def __write2tps_file(self, datelist, tps_original,
-            tps_180_original, res_tps_180_original,stklist):
+            tps_180_original, stklist, price_forward_adjusted):
         """把TPS因子写入文件
         :datelist: 时间序列
         :tps_original: TPS原始因子数据
         :tps_180_original: TPS_180原始因子数据
-        :res_tps_180_original: res_TPS_180原始因子数据
         :stklist: 股票序列
+        :price_forward_adjuested: 前复权价格矩阵
         """
         cursor = self.conn.cursor()
         tmp_tps = np.zeros((len(datelist),len(stklist)))
         tmp_tps_180 = np.zeros((len(datelist),len(stklist)))
-        tmp_res_tps_180 = np.zeros((len(datelist),len(stklist)))
 
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
@@ -928,18 +974,18 @@ class OracleDbInf(object):
             for k in range(len(stklist)):
                 if stklist[k] in s_info_windcode:
                     idx = s_info_windcode.index(stklist[k]) 
-                    est_price.append(s_est_price[idx])
+                    est_price.append(np.nan if s_est_price[idx] == None else s_est_price[idx])
                 else:
-                    est_price.append(-1)
+                    est_price.append(np.nan)
             tmp_tps[i] = np.array(est_price)
          
         if tps_original.size == 0:
             sio.savemat(DATAPATH+'daily_factor/TPS.mat', mdict={'TPS':tmp_tps})
-            tps_tmps_180 = tmp_tps / self.price_forward_adjusted  - 1
+            tps_tmps_180 = tmp_tps / price_forward_adjusted  - 1
             sio.savemat(DATAPATH+'daily_factor/TPS_180.mat', mdict={'TPS_180':tmp_tps_180})
         else:
             tps_original = np.vstack((tps_original, tmp_tps))
-            tps_180_original = tps_original / self.price_forward_adjusted  - 1
+            tps_180_original = tps_original / price_forward_adjusted  - 1
             sio.savemat(DATAPATH+'daily_factor/TPS.mat', mdict={'TPS':tps_original})
             sio.savemat(DATAPATH+'daily_factor/TPS_180.mat', mdict={'TPS_180':tps_180_original})
             
