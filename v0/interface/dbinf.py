@@ -193,10 +193,10 @@ class OracleDbInf(object):
                                         stklist)
             else:
                 self.log.info('价格因子已经更新完毕')
-         else:
-             self.__write2price_file(tdays_data, np.array([]),
-                                     np.array([]), np.array([]),
-                                     stklist)
+        else:
+            self.__write2price_file(tdays_data, np.array([]),
+                                    np.array([]), np.array([]),
+                                    stklist)
 
     def db_download_tps_factor(self):
         """更新TPS相关因子数据
@@ -214,10 +214,10 @@ class OracleDbInf(object):
                                       stklist)
             else:
                 self.log.info('TPS因子已经更新完毕')
-         else:
-             self.__write2tps_file(tdays_data, np.array([]),
-                                   np.array([]), np.array([]),
-                                   stklist)
+        else:
+            self.__write2tps_file(tdays_data, np.array([]),
+                                  np.array([]), np.array([]),
+                                  stklist)
             
     def db_download_wrating90_factor(self):
         """更新wrating_upgrade90天
@@ -231,8 +231,8 @@ class OracleDbInf(object):
                 self.__write2wratingupgrade_file(tdays_data[len(wrating_upgrade):], wrating_upgrade, stklist)
             else:
                 self.log.info('wrating90因子已经更新完毕')
-         else:
-             self.__write2wratingupgrade_file(tdays_data, wrating_upgrade, stklist)
+        else:
+            self.__write2wratingupgrade_file(tdays_data, wrating_upgrade, stklist)
 
     def db_download_fy1_factor(self):
         """更新盈利预测FY1
@@ -251,10 +251,10 @@ class OracleDbInf(object):
                         peg_forcast_fy1, stklist)
             else:
                 self.log.info('盈利预测ROE,PE,PB,PEG因子已经更新完毕')
-         else:
-             self.__write2forcast_file(tdays_data, np.array([]),
-                     np.array([]), np.array([]),
-                     np.array([]), stklist)
+        else:
+            self.__write2forcast_file(tdays_data, np.array([]),
+                    np.array([]), np.array([]),
+                    np.array([]), stklist)
     
     def db_download_fttm_factor(self): 
         """更新FTTM因子数据
@@ -273,10 +273,10 @@ class OracleDbInf(object):
                         peg_forcast_fttm, stklist)
             else:
                 self.log.info('盈利预测ROE,PE,PB,PEG FTTM因子已经更新完毕')
-         else:
-             self.__write2forcastfttm_file(tdays_data, np.array([]),
-                     np.array([]), np.array([]),
-                     np.array([]), stklist)
+        else:
+            self.__write2forcastfttm_file(tdays_data, np.array([]),
+                    np.array([]), np.array([]),
+                    np.array([]), stklist)
 
     def db_download_yoy_factor(self): 
         """更新yoy因子数据
@@ -292,9 +292,9 @@ class OracleDbInf(object):
                         roe_forcast_yoy, stklist)
             else:
                 self.log.info('盈利预测YOY因子已经更新完毕')
-         else:
-             self.__write2forcastyoy_file(tdays_data, np.array([]),
-                     np.array([]), stklist)
+        else:
+            self.__write2forcastyoy_file(tdays_data, np.array([]),
+                    np.array([]), stklist)
         
     def db_download_bescfp_factor(self):
         tdays_data = self.tdays_data
@@ -310,9 +310,9 @@ class OracleDbInf(object):
                 BP, EP, SP, CFP, stklist)
             else:
                 self.log.info('BP,EP,SP,CFP更新完毕')
-         else:
-             self.__write2bescfp_file(tdays_data, np.array([]),
-             np.array([]), np.array([]), np.array([]), stklist)
+        else:
+            self.__write2bescfp_file(tdays_data, np.array([]),
+                np.array([]), np.array([]), np.array([]), stklist)
 
     def db_download_cagr_factor(self):
         """更新cagr因子
@@ -328,8 +328,8 @@ class OracleDbInf(object):
                         roe_forcast_cagr, stklist)
             else:
                 self.log.info('CAGR更新完毕')
-         else:
-             self.__write2cagr_file(tdays_data, np.array([]), np.array([]), stklist)
+        else:
+            self.__write2cagr_file(tdays_data, np.array([]), np.array([]), stklist)
 
     def db_download_ratingavg_factor(self):
         """更新券商评级因子
@@ -346,8 +346,8 @@ class OracleDbInf(object):
                         rating_net_upgrade, rating_instum, stklist)
             else:
                 self.log.info('券商评级因子更新完毕')
-         else:
-             self.__write2broker_file(tdays_data, np.array([]), np.array([]), np.array([]), stklist)
+        else:
+            self.__write2broker_file(tdays_data, np.array([]), np.array([]), np.array([]), stklist)
 
     def db_download_valuediff_small_trader_act(self):
         """更新机构大户散户的占比因子
@@ -375,13 +375,13 @@ class OracleDbInf(object):
                         stklist)
             else:
                 self.log.info('机构散户大户成交量占比因子更新完毕')
-         else:
-             self.__write2vdsta_file(tdays_data, np.array([]),
-                     np.array([]), np.array([]),
-                     np.array([]), np.array([]),
-                     np.array([]), np.array([]),
-                     np.array([]), np.array([]),
-                     stklist)
+        else:
+            self.__write2vdsta_file(tdays_data, np.array([]),
+                    np.array([]), np.array([]),
+                    np.array([]), np.array([]),
+                    np.array([]), np.array([]),
+                    np.array([]), np.array([]),
+                    stklist)
 
     def db_download_moneyflow_factor(self):
         """更新流动性因子
@@ -397,9 +397,9 @@ class OracleDbInf(object):
                         mf_pct_value, stklist)
             else:
                 self.log.info('流动性因子更新完毕')
-         else:
-             self.__write2mfpct_file(tdays_data, np.array([]),
-                     np.array([]), stklist)
+        else:
+            self.__write2mfpct_file(tdays_data, np.array([]),
+                    np.array([]), stklist)
 
     def db_download_ZZ500HS300weight_factor(self):
         """更新指数权重股
@@ -415,9 +415,9 @@ class OracleDbInf(object):
                         hs300weight, stklist)
             else:
                 self.log.info('权重因子更新完毕')
-         else:
-             self.__write2zz500hs300weight_file(tdays_data, np.array([]),
-                     np.array([]), stklist)
+        else:
+            self.__write2zz500hs300weight_file(tdays_data, np.array([]),
+                    np.array([]), stklist)
 
     def db_download_50weight_factor(self):
         """更新上证50权重
@@ -431,8 +431,8 @@ class OracleDbInf(object):
                 self.__write2sz50weight_file(tdays_data[len(vdsta):], sz50weight, stklist)
             else:
                 self.log.info('50权重因子更新完毕')
-         else:
-             self.__write2sz50weight_file(tdays_data, np.array([]), stklist)
+        else:
+            self.__write2sz50weight_file(tdays_data, np.array([]), stklist)
 
     def db_download_listdate_factor(self):
         """更新上市时间
@@ -447,8 +447,8 @@ class OracleDbInf(object):
                 self.__write2listdate_file(listdate, stklist)
             else:
                 self.log.info('上市时间更新完毕')
-         else:
-             self.__write2listdate_file(np.array([]), stklist)
+        else:
+            self.__write2listdate_file(np.array([]), stklist)
     
     def db_download_industry29_factor(self):
         """更新29个行业因子
@@ -462,8 +462,8 @@ class OracleDbInf(object):
                 self.__write2ind29_file(tdays_data[len(indindex_citic29):], indindex_citic29, indlist)
             else:
                 self.log.info('上市时间更新完毕')
-         else:
-             self.__write2ind29_file(tdays_data, np.array([]), indlist)
+        else:
+            self.__write2ind29_file(tdays_data, np.array([]), indlist)
         
     def __convert_mat2list(self, mat_ndarray):
         """把mat的高维数据转换成list类型
@@ -644,7 +644,7 @@ class OracleDbInf(object):
         :original: 原有数据序列
         :stklist: 股票列表0为没有涨跌停,1为涨停,-1为跌停,2为没有找到该股票
         """
-        tmp_array = np.zeros(len(stklist)) 
+        tmp_array = np.zeros((len(datelist), len(stklist))) 
         cursor = self.conn.cursor()
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
@@ -660,9 +660,9 @@ class OracleDbInf(object):
                     status = up_down_limit_status[s_info_windcode.index(stklist[k])] 
                     data.append(status)
                 else:
-                    data.append(2)
-            tmp_array = np.vstack((tmp_array, np.array(data)))
-        np.delete(tmp_array, [0], axis=0)
+                    data.append(float('nan'))
+            tmp_array[i] = np.array(data)
+
         if original.size == 0:
             sio.savemat(DATAPATH+'up_down_limit_status.mat', mdict={'up_down_limit_status':tmp_array})
         else:
@@ -1513,7 +1513,7 @@ class OracleDbInf(object):
             listdate_original = np.concatenate([listdate_original, tmp_listdate], axis=0)
             sio.savemat(DATAPATH+'listdate.mat', mdict={'listdata':listdate_original})
 
-    def __write2ind29_file(self, datelist, ind29_original, indlist) 
+    def __write2ind29_file(self, datelist, ind29_original, indlist):
         """把29个中信行业数据写入文件
         :datelist: 时间序列
         :ind29_original: 29个行业原始数据
