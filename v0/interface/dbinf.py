@@ -245,6 +245,7 @@ class OracleDbInf(object):
         if(os.path.exists(DATAPATH+'daily_factor/wrating_upgrade.mat')):
             wrating_upgrade = sio.loadmat(DATAPATH+'daily_factor/wrating_upgrade.mat')['wrating_upgrade']
             if(len(wrating_upgrade) < len(tdays_data)):
+                wrating_upgrade = self.__align_column(wrating_upgrade, stklist)
                 self.__write2wratingupgrade_file(tdays_data[len(wrating_upgrade):], wrating_upgrade, stklist)
             else:
                 self.log.info('wrating90因子已经更新完毕')
@@ -1012,7 +1013,7 @@ class OracleDbInf(object):
                     idx = s_info_windcode.index(stklist[k]) 
                     wrating_upgrade.append(s_wrating_upgrade[idx])
                 else:
-                    wrating_upgrade.append(-1)
+                    wrating_upgrade.append(np.nan)
             tmp_wrating_upgrade[i] = np.array(wrating_upgrade)
          
         if original.size == 0:
