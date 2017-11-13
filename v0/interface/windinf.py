@@ -27,8 +27,7 @@ class WindPyInf(object):
         self.start_day = '2005-01-01'
         with open(conf,'r') as f:
             self.conf = json.load(f)
-        self.update_date_area = tuple()
-        self.stklist = None
+        self.tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data'])
     
     def wind_download_trading_days(self):
         """提取交易日交易周从2005-01-01提取到现在的交易时间
@@ -40,11 +39,11 @@ class WindPyInf(object):
         if(os.path.exists(DATAPATH+'tdays_data.mat')):
             tdays_dict = sio.loadmat(DATAPATH+'tdays_data.mat')
             lastest = datetime.datetime.strptime(tdays_dict['tdays_data'][-1][0][0], '%Y/%m/%d')
-            if(lastest <= datetime.datetime.strptime(dnowstr, '%Y-%m-%d')):
+            if(lastest >= datetime.datetime.strptime(dnowstr, '%Y-%m-%d')):
                 self.log.info('发现时间虫洞检查时间序列%s,%s'%(dnowstr, lastest.strftime('%Y-%m-%d')))
                 return
             else:
-                start_date = lastest.strftime('%Y-%m-%d')
+                start_date = (lastest+datetime.timedelta(days=1)).strftime('%Y-%m-%d')
                 original_array = tdays_dict['tdays_data']
                 self.__write2tdays_file(start_date, dnowstr, original_array)
         else:
@@ -52,18 +51,15 @@ class WindPyInf(object):
             original_array = np.array([])
             self.__write2tdays_file(start_date, dnowstr, original_array)
 
-        #更新增量区间
-        self.update_date_area = (start_date, dnowstr)
-
         #判断交易周期文件是否存在采用增量的方式获取数据
         if(os.path.exists(DATAPATH+'tdays_data_week.mat')):
             tdays_dict = sio.loadmat(DATAPATH+'tdays_data_week.mat')
             lastest = datetime.datetime.strptime(tdays_dict['tdays_data_week'][-1][0][0], '%Y/%m/%d')
-            if(lastest <= datetime.datetime.strptime(dnowstr, '%Y-%m-%d')):
+            if(lastest >= datetime.datetime.strptime(dnowstr, '%Y-%m-%d')):
                 self.log.info('发现时间虫洞检查时间序列%s,%s'%(dnowstr, lastest.strftime('%Y-%m-%d')))
             else:
                 start_date = lastest.strftime('%Y-%m-%d')
-                original_array = tdays_dict['tdays_data']
+                original_array = tdays_dict['tdays_data_week']
                 self.__write2tweeks_file(start_date, dnowstr, original_array)
         else:
             start_date = self.start_day
@@ -73,61 +69,46 @@ class WindPyInf(object):
     def wind_download_market_revenue_ratio(self):
         """提取交易日指数收益率
         """
+        tdays_data = self.tdays_data
         if(os.path.exists(DATAPATH+'Ind_daily.mat')):
-            ind_dict = sio.loadmat(DATAPATH+'Ind_daily.mat')
-            start_date = self.update_date_area[0]
-            end_date = self.update_date_area[1]
-            self.__write2inddaily_file(start_date, end_date, ind_dict)
+            ind_pct_chg = sio.loadmat(DATAPATH+'Ind_daily.mat')['ind_pct_chg']
+            if len(ind_pct_chg) < len(tdays_data):
+                self.__write2inddaily_file(tdays_data[len(ind_pct_chg):], ind_pct_chg) 
+            else:
+                self.log.info('交易日指数已经更新')
         else:
-            start_date = self.start_day
-            dnow = datetime.datetime.now()
-            dnowstr = dnow.strftime('%Y-%m-%d')
-            end_date = dnowstr
-            ind_dict = dict()
-            self.__write2inddaily_file(start_date, end_date, ind_dict)
+            self.__write2inddaily_file(tdays_data, np.array([]))
 
     def wind_download_wholea_revenue_ratio(self):
         """提取市场全A指数收益率
         """
+        tdays_data = self.tdays_data
         if(os.path.exists(DATAPATH+'market.mat')):
-            market_dict = sio.loadmat(DATAPATH+'market.mat')
-            start_date = self.update_date_area[0]
-            end_date = self.update_date_area[1]
-            self.__write2market_file(start_date, end_date, market_dict)
+            market = sio.loadmat(DATAPATH+'market.mat')['market']
+            if len(market) < len(tdays_data):
+                self.__write2market_file(tdays_data[len(market):], market)
+            else:
+                self.info('全A指数已经更新到最新')
         else:
-            start_date = self.start_day
-            dnow = datetime.datetime.now()
-            dnowstr = dnow.strftime('%Y-%m-%d')
-            end_date = dnowstr
-            market_dict = dict()
-            self.__write2market_file(start_date, end_date, market_dict)
+            self.__write2market_file(tdays, np.array([]))
 
     def wind_download_stkind(self):
         """提取股票的行业属性
         """
-        if(os.path.exists(DATAPATH+'stock.mat')):
-             tmpstklist = sio.loadmat(DATAPATH+'stock.mat')['stklist']
-             self.stklist = [elt[0][0] for elt in tmpstklist]
-        else:
-            self.log.error('无法找到股票列表文件请先下载股票列表')
-            return
-        
-        if(os.path.exists(DATAPATH+'tdays_data.mat')):
-            tdays_data = sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data']
-            tdays_data = [elt[0][0] for elt in tdays_data]
-        else:
-            self.log.error('无法找到时间序列文件')
-        
+        tdays_data = self.tdays_data 
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
         if(os.path.exists(DATAPATH+'ind_of_stock.mat')):
             ind_of_stock = sio.loadmat(DATAPATH+'ind_of_stock.mat')['ind_of_stock']
             if len(ind_of_stock) < len(tdays_data):
+                ind_of_stock = self.__align_column(ind_of_stock, stklist)
                 self.__write2indstock_file(tdays_data[len(ind_of_stock):len(tdays_data)],
-                    ind_of_stock, self.stklist)
+                    ind_of_stock, stklist)
             else:
                 self.log.info('行业属性已经更新到最新')
         else:
             ind_of_stock = np.array([])
-            self.__write2indstock_file(tdays_data, ind_of_stock, self.stklist)
+            self.__write2indstock_file(tdays_data, ind_of_stock, stklist)
 
     def wind_download_sz50_ratio(self):
         """提取上证50的日收益率数据
@@ -217,6 +198,7 @@ class WindPyInf(object):
         if(os.path.exists(DATAPATH+'daily_factor/MV.mat')):
             mv = sio.loadmat(DATAPATH+'daily_factor/MV.mat')['MV']
             if(len(mv) < len(tdays_data)):
+                mv = self.__align_column(mv, stklist)
                 self.__write2marketvalue_file(tdays_data[len(mv):], mv, stklist)
             else:
                 self.log.info('市值因子已经更新到最新')
@@ -232,7 +214,8 @@ class WindPyInf(object):
         if(os.path.exists(DATAPATH+'daily_factor/profit_pred_4w.mat')):
             profit_pred_4w = sio.loadmat(DATAPATH+'daily_factor/profit_pred_4w.mat')['profit_pred_4w']
             if(len(profit_pred_4w) < len(tdays_data)):
-                self.__write2profitpred4w_file(tdays.data[len(profit_pred_4w):], profit_pred_4w, stklist)
+                profit_pred_4w = self.__align_column(profit_pred_4w, stklist)
+                self.__write2profitpred4w_file(tdays_data[len(profit_pred_4w):], profit_pred_4w, stklist)
             else:
                 self.log.info('预测净利润因子已经更新到最新')
         else:
@@ -272,30 +255,36 @@ class WindPyInf(object):
         sio.savemat(DATAPATH+'tdays_data_week', mdict={'tdays_data_week':tweeks_array})
         self.tweeks_array = tweeks_array 
 
-    def __write2inddaily_file(self, start_date, end_date, original):
+    def __write2inddaily_file(self, datelist, original):
         """根据配置文件获取市场指数收益率
-        :start_date: 起始日期
-        :end_date: 结束日期
-        :original: 原有的数据字典dict类型
+        :datelist: 时间序列 
+        :original: 原有的数据
         """
+        start_date = datetime.datetime.strptime(datelist[0], '%Y/%m/%d').strftime('%Y%m%d')
+        end_date = datetime.datetime.strptime(datelist[-1], '%Y/%m/%d').strftime('%Y%m%d')
         data = w.wsd(self.conf['index_list'], 'pct_chg',
                 start_date, end_date,
                 'Fill=Previous', 'PriceAdj=F')
-        pct_chg = np.arange(len(data.Data[0])).reshape(len(data.Data[0]),1)
+        pct_chg = np.zeros((len(datelist), len(data.Codes)))
         ind_name = np.array(w.wsd(self.conf['index_list'], 'sec_name').Data[0])
         ind_code = np.array(w.wsd(self.conf['index_list'], 'trade_code').Data[0])
-        
-        for elt in data.Codes:
-            idx = data.Codes.index(elt)
-            pct_chg = np.column_stack((pct_chg, self.__convert_row2column(np.array(data.Data[idx])/100.0)))
-        pct_chg = np.delete(pct_chg, [0], axis=1)
-        if 'ind_pct_chg' not in original:
-            original['ind_pct_chg'] = pct_chg
+
+        if len(datelist) > 1:
+            #按照列排列
+            for i in range(len(data.Codes)):
+                pct_chg[:,i] = np.array(data.Data[i]) / 100.0 
+
+        if len(datelist) == 1:
+            pct_chg[0] = np.array(data.Data[0]) / 100.0
+            
+
+        if original.size == 0 :
+            sio.savemat(DATAPATH+'Ind_daily', mdict={'ind_pct_chg': pct_chg})
         else:
-            orginal['ind_pct_chg'] = np.column_stack((orginal['ind_pct_chg'], pct_chg))
+            original = np.vstack((original, pct_chg))
+            sio.savemat(DATAPATH+'Ind_daily', mdict={'ind_pct_chg': original})
         self.log.info(ind_name)
         self.log.info(ind_code)
-        sio.savemat(DATAPATH+'Ind_daily', mdict=original)
 
         #计算行业近10天的收益率的动量这里重新计算
         ind_momentum = np.arange(len(pct_chg[0]))
@@ -304,20 +293,21 @@ class WindPyInf(object):
         ind_momentum = np.delete(ind_momentum, [0], axis=0)
         sio.savemat(DATAPATH+'ind_momentum', mdict={'ind_momentum':ind_momentum})
         
-    def __write2market_file(self, start_date, end_date, market_dict):
+    def __write2market_file(self, datelist, original):
         """获取全A指数收益率
-        :start_date: 起始日期
-        :end_date: 结束日期
-        :market_dict: 原有全A数据字典
+        :datelist: 时间序列
+        :original: 原有全A数据
         """
+        start_date = datetime.datetime.strptime(datelist[0], '%Y/%m/%d').strftime('%Y%m%d')
+        end_date = datetime.datetime.strptime(datelist[-1], '%Y/%m/%d').strftime('%Y%m%d')
         market = self.__convert_row2column(np.array(w.wsd(self.conf['whole_a'], 'pct_chg',
                                             start_date, end_date,
                                             'Fill=Previous', 'PriceAdj=F').Data[0]) / 100.0)
-        if 'market' not in market_dict:
-            market_dict['market'] = market
+        if original.size == 0:
+            sio.savemat(DATAPATH+'market', mdict={'market':market})
         else:
-            market_dict['market'] = np.column_stack((market_dict['market'], market))
-        sio.savemat(DATAPATH+'market', mdict=market_dict)
+            original = np.vstack((original, market))
+            sio.savemat(DATAPATH+'market', mdict={'market':original})
 
     def __write2indstock_file(self, datelist, original, stklist):
         """获取股票的行业属性
@@ -347,10 +337,10 @@ class WindPyInf(object):
 
         tmp_array = np.delete(tmp_array, [0], axis=0)
         if(original.size == 0):
-            sio.savemat(DATAPATH+'new_ind_of_stock', mdict={'ind_of_stock':tmp_array})
+            sio.savemat(DATAPATH+'ind_of_stock', mdict={'ind_of_stock':tmp_array})
         else:
             original = np.vstack((original, tmp_array))
-            sio.savemat(DATAPATH+'new_ind_of_stock', mdict={'ind_of_stock':original})
+            sio.savemat(DATAPATH+'ind_of_stock', mdict={'ind_of_stock':original})
         
     def __convert_mat2list(self, mat_ndarray):
         """把mat的字符高维数据转换成list类型
@@ -484,7 +474,7 @@ class WindPyInf(object):
         """
         tmp_marketvalue = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
-            sdate = datetime.datetime.strptime(datelist[i][0][0], '%Y/%m/%d').strftime('%Y%m%d')
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
             data = w.wss(','.join(stklist), 'mkt_cap_ashare', 'tradeDate=%s'%sdate).Data[0]
             tmp_marketvalue[i] = np.array(data)
         if original.size == 0:
@@ -492,6 +482,28 @@ class WindPyInf(object):
         else:
             original = np.vstack((original, tmp_marketvalue))
             sio.savemat(DATAPATH+'daily_factor/MV.mat', mdict={'MV':original})
+
+    def __align_column(self, original, target):
+        """判断是否需要补足数据的列宽
+        :original: 原始数据
+        :target: 目标数据
+        """
+        if len(original) < len(target):
+            colnum = np.shape(original)[1]
+            original = self.__compensate_original_column(original, len(target) - colnum)
+        return original
+
+    def __compensate_original_column(self, original, columnnum):
+        """补足原始数据的列宽
+        :original: 原始矩阵数据
+        :columnnum: 需要补足的列宽数目
+        """
+        rownum = np.shape(original)[0]
+        for i in range(columnnum):
+            s = Series(np.zeros(rownum))
+            col = self.__convert_row2column(s.replace(0, np.nan).values)
+            original = np.concatenate([original, col], axis=1)
+        return original
 
     def __write2profitpred4w_file(self, datelist, original, stklist):
         """把预测盈利因子写入文件
@@ -501,8 +513,8 @@ class WindPyInf(object):
         """
         tmp_profitpred4w = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
-            sdate = datetime.datetime.strptime(datelist[i][0][0], '%Y/%m/%d').strftime('%Y%m%d')
-            syear = datetime.datetime.strptime(datelist[i][0][0], '%Y/%m/%d').strftime('%Y')
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            syear = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y')
             data = w.wss(','.join(stklist), 'west_nproc_4w', 'tradeDate=%s;year=%s'%(sdate, syear)).Data[0]
             tmp_profitpred4w[i] = np.array(data)
         if original.size == 0:
