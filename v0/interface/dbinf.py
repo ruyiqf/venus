@@ -553,7 +553,7 @@ class OracleDbInf(object):
         :dstlist: 目标列表
         """
         s = set(dstlist)
-        return [1 if elt in s else 0 for elt in srclist]
+        return [1 if elt in s else np.nan for elt in srclist]
             
     def __write2aststockd_file(self, stklist, datelist, original):
         """把全A股票矩阵写入mat文件
@@ -840,7 +840,6 @@ class OracleDbInf(object):
         for i in range(len(price_original)):
             price_forward_adjusted[i] = price_original[i] * adjfactor_original[i] / adjfactor_original[-1]
         self.price_forward_adjusted = price_forward_adjusted 
-        self.adjfactor = adjfactor_original
 
         sio.savemat(DATAPATH+'price_forward_adjusted.mat', mdict={'price_forward_adjusted':price_forward_adjusted})
         sio.savemat(DATAPATH+'daily_factor/price_daily_1.mat', mdict={'price_daily_1':price_original})
@@ -883,9 +882,9 @@ class OracleDbInf(object):
                     dq_high.append(np.nan)
                     dq_low.append(np.nan)
 
-            dq_open = Series(dq_open).fillna(method='ffill').values 
-            dq_high = Series(dq_high).fillna(method='ffill').values
-            dq_low = Series(dq_low).fillna(method='ffill').values
+            #dq_open = Series(dq_open).fillna(method='ffill').values 
+            #dq_high = Series(dq_high).fillna(method='ffill').values
+            #dq_low = Series(dq_low).fillna(method='ffill').values
             tmp_open[i] = np.array(dq_open)
             tmp_high[i] = np.array(dq_high)
             tmp_low[i] = np.array(dq_low)
@@ -912,9 +911,9 @@ class OracleDbInf(object):
         high_forward_adjusted = np.zeros(np.shape(high_original))
         low_forward_adjusted = np.zeros(np.shape(low_original))
         for i in range(len(open_original)):
-            open_forward_adjusted = open_original[i] * adjfactor[i] / self.adjfactor[-1]
-            high_forward_adjusted = high_original[i] * adjfactor[i] / self.adjfactor[-1]
-            low_forward_adjusted = low_original[i] * adjfactor[i] / self.adjfactor[-1]
+            open_forward_adjusted[i] = open_original[i] * adjfactor[i] / adjfactor[-1]
+            high_forward_adjusted[i] = high_original[i] * adjfactor[i] / adjfactor[-1]
+            low_forward_adjusted[i] = low_original[i] * adjfactor[i] / adjfactor[-1]
 
         sio.savemat(DATAPATH+'open_forward_adjusted.mat', mdict={'open_forward_adjusted':open_forward_adjusted})
         sio.savemat(DATAPATH+'high_forward_adjusted.mat', mdict={'high_forward_adjusted':high_forward_adjusted})
@@ -1522,8 +1521,8 @@ class OracleDbInf(object):
                 else:
                     zz500weight.append(0)
             
-            tmp_zz500weight[i] = np.array(zz500weight)
-            tmp_hs300weight[i] = np.array(hs300weight)
+            tmp_zz500weight[i] = np.array(zz500weight) / 100.0
+            tmp_hs300weight[i] = np.array(hs300weight) / 100.0
 
         if zz500weight_original.size == 0:
             sio.savemat(DATAPATH+'ZZ500_weight.mat', mdict={'ZZ500_weight':tmp_zz500weight})
