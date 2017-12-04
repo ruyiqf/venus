@@ -277,7 +277,6 @@ class WindPyInf(object):
         if len(datelist) == 1:
             pct_chg[0] = np.array(data.Data[0]) / 100.0
             
-
         if original.size == 0 :
             sio.savemat(DATAPATH+'Ind_daily', mdict={'ind_pct_chg': pct_chg})
         else:
@@ -287,10 +286,10 @@ class WindPyInf(object):
         self.log.info(ind_code)
 
         #计算行业近10天的收益率的动量这里重新计算
-        ind_momentum = np.arange(len(pct_chg[0]))
+        print(np.shape(original))
+        ind_momentum = np.zeros(np.shape(original))
         for i in range(10, len(pct_chg)):
-            ind_momentum = np.vstack((ind_momentum, np.prod(pct_chg[i-9:i]+1, axis=0) - 1))
-        ind_momentum = np.delete(ind_momentum, [0], axis=0)
+            ind_momentum[i] = np.prod(pct_chg[i-9:i]+1, axis=0) - 1
         sio.savemat(DATAPATH+'ind_momentum', mdict={'ind_momentum':ind_momentum})
         
     def __write2market_file(self, datelist, original):
