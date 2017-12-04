@@ -519,6 +519,22 @@ class OracleDbInf(object):
         else:
             self.__write2ind29_file(tdays_data, np.array([]), indlist)
         
+    def db_download_totalmv_factor(self):
+        """更新总市值因子
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/TotalMV.mat')):
+            totalmv = sio.loadmat(DATAPATH+'daily_factor/TotalMV.mat')['TotalMV']
+            if(len(totalmv) < len(tdays_data)):
+                totalmv = self.__align_column(totalmv, stklist)
+                self.__write2totalmv_file(tdays_data[len(totalmv):], totalmv, stklist)
+            else:
+                self.log.info('市值因子更新完毕')
+        else:
+            self.__write2totalmv_file(tdays_data, np.array([]), stklist)
+        
     def __convert_mat2list(self, mat_ndarray):
         """把mat的高维数据转换成list类型
         :mat_ndarray: mat数据格式
@@ -811,7 +827,7 @@ class OracleDbInf(object):
                 else:
                     turnover.append(np.nan)
 
-            turnover = Series(turnover).fillna(method='ffill').values
+            #turnover = Series(turnover).fillna(method='ffill').values
             tmp_tr[i] = turnover
 
         if price_original.size == 0:
@@ -858,6 +874,15 @@ class OracleDbInf(object):
         tmp_open = np.zeros((len(datelist),len(stklist)))
         tmp_high = np.zeros((len(datelist),len(stklist)))
         tmp_low = np.zeros((len(datelist),len(stklist)))
+
+        print(np.shape(tmp_open))
+        print(np.shape(tmp_high))
+        print(np.shape(tmp_low))
+
+        print(np.shape(open_original))
+        print(np.shape(high_original))
+        print(np.shape(low_original))
+
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
             sql = 'select s_info_windcode,s_dq_open,s_dq_high,s_dq_low from  AShareEODPrices   WHERE trade_dt=%s' % sdate
@@ -882,9 +907,6 @@ class OracleDbInf(object):
                     dq_high.append(np.nan)
                     dq_low.append(np.nan)
 
-            #dq_open = Series(dq_open).fillna(method='ffill').values 
-            #dq_high = Series(dq_high).fillna(method='ffill').values
-            #dq_low = Series(dq_low).fillna(method='ffill').values
             tmp_open[i] = np.array(dq_open)
             tmp_high[i] = np.array(dq_high)
             tmp_low[i] = np.array(dq_low)
@@ -1557,7 +1579,7 @@ class OracleDbInf(object):
                     sz50weight.append(np.nan if weight[idx] == None else weight[idx])
                 else:
                     sz50weight.append(0)
-            tmp_sz50weight[i] = np.array(sz50weight)
+            tmp_sz50weight[i] = np.array(sz50weight) / 100.0
 
         if sz50weight_original.size == 0:
             sio.savemat(DATAPATH+'SZ50_weight.mat', mdict={'SZ50_weight':tmp_sz50weight})
@@ -1585,8 +1607,8 @@ class OracleDbInf(object):
                 listdate.append(np.nan if s_info_listdate[idx] == None else s_info_listdate[idx])
             else:
                 listdate.append(np.nan)
-        tmp_listdate[0] = np.array(listdate) 
-        sio.savemat(DATAPATH+'listdate.mat', mdict={'listdate':tmp_listdate})
+        tmp_listdate[0] = np.array(listdate)
+        sio.savemat(DATAPATH+'listdate.mat', mdict={'listdate': tmp_listdate})
 
     def __write2ind29_file(self, datelist, ind29_original, indlist):
         """把29个中信行业数据写入文件
@@ -1620,3 +1642,34 @@ class OracleDbInf(object):
             ind29_original = np.vstack((ind29_original, tmp_indcitic_29))
             sio.savemat(DATAPATH+'indIndex_CITIC_29.mat', mdict={'indIndex_CITIC_29':ind29_original})
         
+    def __write2totalmv_file(self, datelist, totalmv_original, stklist):
+        """把个股市值因子写入文件
+        :datelist: 时间序列
+        :totalmv_original: 市值的原始因子
+        :stklist: 股票列表
+        """
+        cursor = self.conn.cursor()
+        tmp_totalmv = np.zeros((len(datelist),len(stklist)))
+
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = 'select s_info_windcode,S_VAL_MV from  AShareEODDerivativeIndicator   WHERE trade_dt=%s' % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_info_windcode = ret[0]
+            s_val_mv = ret[1]
+            totalmv = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    totalmv.append(np.nan if s_val_mv[idx] == None else s_val_mv[idx])
+                else:
+                    totalmv.append(np.nan)
+            tmp_totalmv[i] = np.array(totalmv)
+
+        if totalmv_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/TotalMV.mat', mdict={'TotalMV':tmp_totalmv})
+        else:
+            totalmv_original = np.vstack((totalmv_original, tmp_totalmv))
+            sio.savemat(DATAPATH+'daily_factor/TotalMV.mat', mdict={'TotalMV':totalmv_original})

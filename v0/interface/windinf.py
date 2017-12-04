@@ -189,6 +189,72 @@ class WindPyInf(object):
         else:
             self.__write2hs300_file(tdays_data, np.array([]))
 
+    def wind_download_h00016_ratio(self):
+        """提权H00016.SH指数收益率
+        """
+        tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data'])
+        if(os.path.exists(DATAPATH+'SZ50_all.mat')):
+            SZ50_all = sio.loadmat(DATAPATH+'SZ50_all.mat')['SZ50_all']
+            if len(SZ50_all) < len(tdays_data):
+                self.__write2sz50all_file(tdays_data[len(SZ50_all):len(tdays_data)], SZ50_all)
+            else:
+                self.log.info('SZ50_all已经更新到最新')
+        else:
+            self.__write2sz50all_file(tdays_data, np.array([]))
+        
+        if(os.path.exists(DATAPATH+'SZ50_all_daily_ret.mat')):
+            SZ50_all_daily_ret = sio.loadmat(DATAPATH+'SZ50_all_daily_ret.mat')['SZ50_all_daily_ret']
+            if len(SZ50_all_daily_ret) < len(tdays_data):
+                self.__write2sz50alldailyret_file(tdays_data[len(SZ50_all_daily_ret):len(tdays_data)], SZ50_all_daily_ret)
+            else:
+                self.log.info('SZ50_all_daily_ret已经更新到最新')
+        else:
+            self.__write2sz50alldailyret_file(tdays_data, np.array([]))
+        
+    def wind_download_h00030_ratio(self):
+        """提权H00030.CSI指数收益率
+        """
+        tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data'])
+        if(os.path.exists(DATAPATH+'HS300_all.mat')):
+            HS300_all = sio.loadmat(DATAPATH+'HS300_all.mat')['HS300_all']
+            if len(HS300_all) < len(tdays_data):
+                self.__write2hs300all_file(tdays_data[len(HS300_all):len(tdays_data)], HS300_all)
+            else:
+                self.log.info('HS300_all已经更新到最新')
+        else:
+            self.__write2hs300all_file(tdays_data, np.array([]))
+        
+        if(os.path.exists(DATAPATH+'HS300_all_daily_ret.mat')):
+            HS300_all_daily_ret = sio.loadmat(DATAPATH+'HS300_all_daily_ret.mat')['HS300_all_daily_ret']
+            if len(HS300_all_daily_ret) < len(tdays_data):
+                self.__write2hs300alldailyret_file(tdays_data[len(HS300_all_daily_ret):len(tdays_data)], HS300_all_daily_ret)
+            else:
+                self.log.info('HS300_all_daily_ret已经更新到最新')
+        else:
+            self.__write2hs300alldailyret_file(tdays_data, np.array([]))
+
+    def wind_download_h00905_ratio(self):
+        """提权H00905.CSI指数收益率
+        """
+        tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data'])
+        if(os.path.exists(DATAPATH+'ZZ500_all.mat')):
+            ZZ500_all = sio.loadmat(DATAPATH+'ZZ500_all.mat')['ZZ500_all']
+            if len(ZZ500_all) < len(tdays_data):
+                self.__write2zz500all_file(tdays_data[len(ZZ500_all):len(tdays_data)], ZZ500_all)
+            else:
+                self.log.info('ZZ500_all已经更新到最新')
+        else:
+            self.__write2zz500all_file(tdays_data, np.array([]))
+        
+        if(os.path.exists(DATAPATH+'ZZ500_all_daily_ret.mat')):
+            HS300_all_daily_ret = sio.loadmat(DATAPATH+'ZZ500_all_daily_ret.mat')['ZZ500_all_daily_ret']
+            if len(ZZ500_all_daily_ret) < len(tdays_data):
+                self.__write2zz500alldailyret_file(tdays_data[len(ZZ500_all_daily_ret):len(tdays_data)], ZZ500_all_daily_ret)
+            else:
+                self.log.info('ZZ500_all_daily_ret已经更新到最新')
+        else:
+            self.__write2zz500alldailyret_file(tdays_data, np.array([]))
+
     def wind_download_market_value(self):
         """提取市值相关因子
         """
@@ -279,6 +345,8 @@ class WindPyInf(object):
             
         if original.size == 0 :
             sio.savemat(DATAPATH+'Ind_daily', mdict={'ind_pct_chg': pct_chg})
+            original = np.zeros(np.shape(pct_chg))
+            original = pct_chg
         else:
             original = np.vstack((original, pct_chg))
             sio.savemat(DATAPATH+'Ind_daily', mdict={'ind_pct_chg': original})
@@ -286,10 +354,9 @@ class WindPyInf(object):
         self.log.info(ind_code)
 
         #计算行业近10天的收益率的动量这里重新计算
-        print(np.shape(original))
         ind_momentum = np.zeros(np.shape(original))
-        for i in range(10, len(pct_chg)):
-            ind_momentum[i] = np.prod(pct_chg[i-9:i]+1, axis=0) - 1
+        for i in range(10, len(original)):
+            ind_momentum[i] = np.prod(original[i-10:i]+1, axis=0) - 1
         sio.savemat(DATAPATH+'ind_momentum', mdict={'ind_momentum':ind_momentum})
         
     def __write2market_file(self, datelist, original):
@@ -522,6 +589,127 @@ class WindPyInf(object):
             original = np.vstack((original, tmp_profitpred4w))
             sio.savemat(DATAPATH+'daily_factor/profit_pred_4w.mat', mdict={'profit_pred_4w':original})
 
+    def __write2sz50all_file(self, datelist, sz50_all_original):
+        """把H00016指数写入文件
+        :datelist:
+        :sz50_all_original:
+        """
+        start_date = self.__convert_time_format(datelist[0])
+        end_date = self.__convert_time_format(datelist[-1])
+        data = np.array(w.wsd('H00016.SH','close',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0])
+        data = self.__convert_row2column(data)
+        if sz50_all_original.size == 0:
+            sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':data})
+        else:
+            sz50_all_original = np.vstack((original, data))
+            sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':sz50_all_original})
+
+    def __write2sz50alldailyret_file(self, datelist, sz50_all_daily_ret_original):
+        """把H00016指数收益率写入文件
+        :datelist:
+        :sz50_all_daily_ret_original:
+        """
+        start_date = self.__convert_time_format(datelist[0])
+        end_date = self.__convert_time_format(datelist[-1])
+        data = np.array(w.wsd('H00016.SH','pct_chg',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0]) / 100.0
+        data = self.__convert_row2column(data) 
+        if sz50_all_daily_ret_original.size == 0:
+            sio.savemat(DATAPATH+'SZ50_all_daily_ret.mat', mdict={'SZ50_all_daily_ret':data})
+        else:
+            sz50_all_daily_ret_original = np.vstack((sz50_all_daily_ret_original, data))
+            sio.savemat(DATAPATH+'SZ50_all_daily_ret.mat', mdict={'SZ50_all_daily_ret':sz50_all_daily_ret_original})
+        
+    def __write2sz50all_file(self, datelist, sz50_all_original):
+        """把H00016指数写入文件
+        :datelist:
+        :sz50_all_original:
+        """
+        start_date = self.__convert_time_format(datelist[0])
+        end_date = self.__convert_time_format(datelist[-1])
+        data = np.array(w.wsd('H00016.SH','close',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0])
+        data = self.__convert_row2column(data)
+        if sz50_all_original.size == 0:
+            sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':data})
+        else:
+            sz50_all_original = np.vstack((original, data))
+            sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':sz50_all_original})
+
+    def __write2sz50alldailyret_file(self, datelist, sz50_all_daily_ret_original):
+        """把H00016指数收益率写入文件
+        :datelist:
+        :sz50_all_daily_ret_original:
+        """
+        start_date = self.__convert_time_format(datelist[0])
+        end_date = self.__convert_time_format(datelist[-1])
+        data = np.array(w.wsd('H00016.SH','pct_chg',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0]) / 100.0
+        data = self.__convert_row2column(data) 
+        if sz50_all_daily_ret_original.size == 0:
+            sio.savemat(DATAPATH+'SZ50_all_daily_ret.mat', mdict={'SZ50_all_daily_ret':data})
+        else:
+            sz50_all_daily_ret_original = np.vstack((sz50_all_daily_ret_original, data))
+            sio.savemat(DATAPATH+'SZ50_all_daily_ret.mat', mdict={'SZ50_all_daily_ret':sz50_all_daily_ret_original})
+
+    def __write2hs300_file(self, datelist, hs300_all_original):
+        """把H00300指数写入文件
+        :datelist:
+        :hs300_all_original:
+        """
+        start_date = self.__convert_time_format(datelist[0])
+        end_date = self.__convert_time_format(datelist[-1])
+        data = np.array(w.wsd('H00300.CSI','close',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0])
+        data = self.__convert_row2column(data)
+        if hs300_all_original.size == 0:
+            sio.savemat(DATAPATH+'HS300_all.mat', mdict={'HS300_all':data})
+        else:
+            hs300_all_original = np.vstack((hs300_all_original, data))
+            sio.savemat(DATAPATH+'HS300_all.mat', mdict={'HS300_all':hs300_all_original})
+
+    def __write2hs300alldailyret_file(self, datelist, hs300_all_daily_ret_original):
+        """把H00300指数收益率写入文件
+        :datelist:
+        :hs300_all_daily_ret_original:
+        """
+        start_date = self.__convert_time_format(datelist[0])
+        end_date = self.__convert_time_format(datelist[-1])
+        data = np.array(w.wsd('H00300.CSI','pct_chg',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0]) / 100.0
+        data = self.__convert_row2column(data) 
+        if hs300_all_daily_ret_original.size == 0:
+            sio.savemat(DATAPATH+'HS300_all_daily_ret.mat', mdict={'HS300_all_daily_ret':data})
+        else:
+            hs300_all_daily_ret_original = np.vstack((hs300_all_daily_ret_original, data))
+            sio.savemat(DATAPATH+'HS300_all_daily_ret.mat', mdict={'HS300_all_daily_ret':hs300_all_daily_ret_original})
+
+    def __write2zz500_file(self, datelist, zz500_all_original):
+        """把H00905指数写入文件
+        :datelist:
+        :zz500_all_original:
+        """
+        start_date = self.__convert_time_format(datelist[0])
+        end_date = self.__convert_time_format(datelist[-1])
+        data = np.array(w.wsd('H00905.CSI','close',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0])
+        data = self.__convert_row2column(data)
+        if hs300_all_original.size == 0:
+            sio.savemat(DATAPATH+'ZZ500_all.mat', mdict={'ZZ500_all':data})
+        else:
+            hs300_all_original = np.vstack((zz500_all_original, data))
+            sio.savemat(DATAPATH+'ZZ500_all.mat', mdict={'ZZ500_all':zz500_all_original})
+
+    def __write2zz500alldailyret_file(self, datelist, zz500_all_daily_ret_original):
+        """把H00300指数收益率写入文件
+        :datelist:
+        :zz500_all_daily_ret_original:
+        """
+        start_date = self.__convert_time_format(datelist[0])
+        end_date = self.__convert_time_format(datelist[-1])
+        data = np.array(w.wsd('H00905.CSI','pct_chg',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0]) / 100.0
+        data = self.__convert_row2column(data) 
+        if zz500_all_daily_ret_original.size == 0:
+            sio.savemat(DATAPATH+'ZZ500_all_daily_ret.mat', mdict={'ZZ500_all_daily_ret':data})
+        else:
+            zz500_all_daily_ret_original = np.vstack((zz500_all_daily_ret_original, data))
+            sio.savemat(DATAPATH+'ZZ500_all_daily_ret.mat', mdict={'ZZ500_all_daily_ret':zz500_all_daily_ret_original})
+
     def __del__(self):
         w.stop()
+        
 
