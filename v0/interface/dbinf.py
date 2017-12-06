@@ -534,6 +534,22 @@ class OracleDbInf(object):
                 self.log.info('市值因子更新完毕')
         else:
             self.__write2totalmv_file(tdays_data, np.array([]), stklist)
+    
+    def db_download_epfwd_factor(self):
+        """更新EPFWD因子
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'newriskfactor/BarraSmallRisk/EPFWD.mat')):
+            epfwd = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk')['EPFWD']
+            if(len(epfwd) < len(tdays_data)):
+                epfwd = self.__align_column(epfwd, stklist)
+                self.__write2epfwd_file(tdays_data[len(epfwd):], epfwd, stklist)
+            else:
+                self.log.info('EPFWD因子更新完毕')
+        else:
+            self.__write2epfwd_file(tdays_data, np.array([]), stklist)
         
     def __convert_mat2list(self, mat_ndarray):
         """把mat的高维数据转换成list类型
@@ -730,7 +746,6 @@ class OracleDbInf(object):
             original = np.vstack((original, tmp_array))
             sio.savemat(DATAPATH+'tradestatus.mat', mdict={'tradestatus':original})
 
-            
     def __write2udlimitstatus_file(self, datelist, original, stklist):
         """更新股票涨停的状态
         :datelist: 时间序列
@@ -1673,3 +1688,34 @@ class OracleDbInf(object):
         else:
             totalmv_original = np.vstack((totalmv_original, tmp_totalmv))
             sio.savemat(DATAPATH+'daily_factor/TotalMV.mat', mdict={'TotalMV':totalmv_original})
+
+    def __write2epfwd_file(self, datelist, epfwd_original, stklist):
+        """把epfwd因子写入文件
+        :datelist: 时间序列
+        :epfwd_original: epfwd原始因子
+        :stklist: 股票列表
+        """
+        cursor = self.conn.cursor()
+        tmp_epfwd = np.zeros((len(datelist),len(stklist)))
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = "select s_info_windcode,est_pe from AShareConsensusRollingData where est_dt=%s and rolling_type='FTTM'" % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_info_windcode = ret[0]
+            est_pe = ret[1]
+            epfwd = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_windcode:
+                    idx = s_info_windcode.index(stklist[k]) 
+                    epfwd.append(np.nan if epfwd[idx] == None else ets_pe[idx])
+                else:
+                    epfwd.append(np.nan)
+            tmp_epfwd[i] = 1.0 / np.array(epfwd)
+
+        if epfwd_original.size == 0:
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EPFWD.mat', mdict={'EPFWD':tmp_epfwd})
+        else:
+            epfwd_original = np.vstack((efpwd_original, tmp_epfwd))
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EPFWD.mat', mdict={'EPFWD':epfwd_original})

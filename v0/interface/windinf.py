@@ -28,6 +28,7 @@ class WindPyInf(object):
         with open(conf,'r') as f:
             self.conf = json.load(f)
         self.tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data'])
+        self.financial_factor = self.conf['financial_factor']
     
     def wind_download_trading_days(self):
         """提取交易日交易周从2005-01-01提取到现在的交易时间
@@ -65,6 +66,38 @@ class WindPyInf(object):
             start_date = self.start_day
             original_array = np.array([])
             self.__write2tweeks_file(start_date, dnowstr, original_array)
+
+    def wind_download_trading_month(self):
+        """提取交易日月份并做筛选
+        """
+        dnow = datetime.datetime.now()
+        tmonth = w.tdays('20050101', dnow.strftime('%Y%m%d'), 'Period=M').Times
+        month_end_day = list()
+        for elt in tmonth:
+            if elt.month == 4 or elt.month == 8 or elt.month == 10:
+                month_end_day.append(elt.strftime('%Y/%m/%d'))
+        tmp = np.array(month_end_day, dtype=np.object)
+        tmp = self.__convert_row2column(tmp)
+        sio.savemat(DATAPATH+'finfactor/fin_month.mat', mdict={'fin_month':tmp})
+
+    def wind_download_financial_factor(self):
+        """提取财务因子数据
+        """
+        tmonth_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'finfactor/fin_month.mat')['fin_month'])
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        for elt in self.financial_factor:
+            print(elt)
+            if(os.path.exists(DATAPATH+'finfactor/'+elt+'.mat')):
+                fin_data = sio.loadmat(DATAPATH+'finfactor/'+elt+'.mat')[elt]
+                if len(fin_data) < len(tmonth_data):
+                    fin_data = self.__align_column(fin_data, stklist)
+                    self.__write2findata_file(tmonth_data[len(fin_data):],
+                            fin_data, stklist, elt)
+                else:
+                    self.log.info('已经更新财务%s因子表' % elt)
+            else:
+                self.__write2findata_file(tmonth_data, np.array([]), stklist, elt)
 
     def wind_download_market_revenue_ratio(self):
         """提取交易日指数收益率
@@ -287,12 +320,108 @@ class WindPyInf(object):
         else:
             self.__write2profitpred4w_file(tdays_data, np.array([]), stklist)
 
+    def wind_download_egibs_factor(self):
+        """提取盈利预测因子数据
+        """
+        tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data'])
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'newriskfactor/BarrarSmallRisk/EGIBS.mat')):
+            egibs = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk/EGIBS.mat')['EGIBS']
+            egibs_s = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk/EGIBS_s.mat')['EGIBS_s']
+            if(len(egibs) < len(tdays_data)):
+                egibs = self.__align_column(egibs, stklist)
+                egibs_s = self.__align_column(egibs_s, stklist)
+                self.__write2egibs_file(tdays_data[len(egibs):], egibs, egibs_s, stklist)
+            else:
+                self.log.info('盈利预测因子已经更新到最新')
+        else:
+            self.__write2egibs_file(tdays_data, np.array([]), np.array([]), stklist)
+
+    def wind_download_egsgro_factor(self):
+        """提取增长率数据
+        """
+        tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'finfactor/fin_month.mat')['fin_month'])
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'newriskfactor/BarrarSmallRisk/EGRO.mat')):
+            egro = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk/EGRO.mat')['EGRO']
+            sgro = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk/SGRO.mat')['SGRO']
+            if(len(egro) < len(tdays_data)):
+                egro = self.__align_column(egro, stklist)
+                sgro = self.__align_column(sgro, stklist)
+                self.__write2egsgro_file(tdays_data[len(egro):], egro, sgro, stklist)
+            else:
+                self.log.info('债券增长率因子已经更新到最新')
+        else:
+            self.__write2egsgro_file(tdays_data, np.array([]), np.array([]), stklist)
+        
     def __convert_row2column(self, np_array):
         """把行向量转置成列向量
         :np_array:行向量
         """
         return np_array.reshape(len(np_array), 1)
 
+    def __write2egibs_file(self, datelist, egibs_original, egibs_s_original, stklist):
+        """把egibs因子写入文件
+        :datelist: 时间序列
+        :egibs_original: EGIBS的原始数据列表
+        :egibs_s_original: EGIBS_S的原始数据列表
+        :stklist: 股票列表
+        """
+        tmp_egibs = np.zeros((len(datelist), len(stklist))) 
+        tmp_egibs_s = np.zeros((len(datelist), len(stklist)))
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            data = w.wss(','.join(stklist), 'west_netprofit_CAGR, west_netprofit_YOY', 'tradeDate=%s'%sdate).Data
+            tmp_egibs[i] = np.array(data[0])
+            tmp_egibs_s[i] = np.array(data[1])
+
+        if egibs_original.size == 0:
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EGIBS.mat', mdict={'EGIBS':tmp_egibs})
+        else:
+            egibs_original = np.vstack((egibs_original, tmp_egibs))
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EGIBS.mat', mdict={'EGIBS':egibs_original})
+        
+        if egibs_s_original.size == 0:
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EGIBS_s.mat', mdict={'EGIBS_s':tmp_egibs_s})
+        else:
+            egibs_s_original = np.vstack((egibs_s_original, tmp_egibs_s))
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EGIBS_s.mat', mdict={'EGIBS_s':egibs_s_original})
+
+    def __write2egsgro_file(self, datelist, egro_original, sgro_original, stklist):
+        """把egsgro因子写入文件
+        :datelist: 时间序列按照季度来提取
+        :egro_original: 债券增长率因子原始数据
+        :sgro_original: 企业债券率因子原始数据
+        :stklist: 股票序列
+        """
+        tmp_egro = np.zeros((len(datelist), len(stklist))) 
+        tmp_sgro = np.zeros((len(datelist), len(stklist)))
+        for i in range(len(datelist)):
+            date = datetime.datetime.strptime(datelist[i], '%Y/%m/%d')
+            year = date.year
+            month = date.month
+            if month == 4:
+                data = w.wss(','.join(stklist), 'growth_cagr_tr, growth_cagr_netprofit', 'year=%s;n=5'%str(year)).Data
+                tmp_egro[i] = np.array(data[0])
+                tmp_sgro[i] = np.array(data[1])
+            else:
+                tmp_egro[i] = tmp_egro[i-1]
+                tmp_sgro[i] = tmp_sgro[i-1]
+
+        if egro_original.size == 0:
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EGRO.mat', mdict={'EGRO':tmp_egro})
+        else:
+            egro_original = np.vstack((egro_original, tmp_egro))
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EGRO.mat', mdict={'EGIBS':egro_original})
+        
+        if sgro_original.size == 0:
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/SGRO.mat', mdict={'SGRO':tmp_sgro})
+        else:
+            sgro_original = np.vstack((sgro_original, tmp_sgro))
+            sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/SGRO.mat', mdict={'SGRO':sgro_original})
+        
     def __write2tdays_file(self, start_date, end_date, original):
         """把交易日期通过增量的方式写入Matlab文件
         :start_date: 起始日期
@@ -709,7 +838,83 @@ class WindPyInf(object):
             zz500_all_daily_ret_original = np.vstack((zz500_all_daily_ret_original, data))
             sio.savemat(DATAPATH+'ZZ500_all_daily_ret.mat', mdict={'ZZ500_all_daily_ret':zz500_all_daily_ret_original})
 
+    def __write2findata_file(self, datelist, findata_original, stklist, factorname):
+        """把某个财务因子数据写入文件，这里的财务因子需要在配置文件里面配置
+        :datelist: 时间序列
+        :findata_orginal: 财务因子数据的原始数据
+        :stklist: 股票列表数据
+        :factorname: 需要写入的财务因子的名称
+        """
+        tmp_data = np.zeros((len(datelist), len(stklist)))
+        for elt in datelist:
+            print(elt)
+            date = datetime.datetime.strptime(elt, '%Y/%m/%d')
+            month = date.month
+            year = date.year
+            if month == 4:
+                rptDate = str(year)+'0331'
+                tradeDate = str(year)+'0430'
+                last_rptDate = str(year-1)+'1231'
+                rptDate_lastyear = str(year-1)+'0331'
+                rptDate_year = str(year-1)+'1231'
+            elif month == 8:
+                rptDate = str(year)+'0630'
+                tradeDate = str(year)+'0831'
+                last_rptDate = str(year)+'0331'
+                last_tradeDate = str(year)+'0430'
+                rptDate_lastyear = str(year-1)+'0630'
+                rptDate_year = str(year-1)+'1231'
+            else:
+                rptDate = str(year)+'0930'
+                tradeDate = str(year)+'1031'
+                last_rptDate = str(year)+'0630'
+                last_tradeDate = str(year)+'0831'
+                rptDate_lastyear = str(year-1)+'0930'
+                rptDate_year = str(year-1)+'1231'
+            
+            #有几个财务因子需要特别处理 
+            if factorname == 'ebit_ttm':
+                data1 = np.array(w.wss(','.join(stklist), 'ebit', 'rptDate=%s;rptType=1'%rptDate).Data[0])
+                data2 = np.array(w.wss(','.join(stklist), 'ebit', 'rptDate=%s;rptType=1'%rptDate_lastyear).Data[0])
+                data3 = np.array(w.wss(','.join(stklist), 'ebit', 'rptData=%s;rptType=1'%rptDate_year).Data[0])
+                tmp_data[datelist.index(elt)] = data1 + data3 - data2
+            elif factorname == 'growth_totalequity':
+                data = np.array(w.wss(','.join(stklist), 'growth_totalequity', 'rptDate=%s;N=3'%rptDate).Data[0])
+                tmp_data[datelist.index(elt)] = data
+            elif factorname == 'netprofit_ttm':
+                data1 = np.array(w.wss(','.join(stklist), 'netprofit_ttm', 'tradeDate=%s' % tradeDate).Data[0])
+                if month == 4:
+                    data2 = np.array(w.wss(','.join(stklist), 'np_belongto_parcomsh', 'rptDate=%s;rtpType=1'%rptDate).Data[0])
+                else:
+                    data2 = np.array(w.wss(','.join(stklist), 'netprofit_ttm', 'tradeDate=%s'%last_tradeDate).Data[0])
+                tmp_data[datelist.index(elt)] = data1 / data2 - 1 
+            elif factorname == 'or_ttm':
+                data2 = np.array(w.wss(','.join(stklist), 'or_ttm', 'tradeDate=%s' % tradeDate).Data[0])
+                if month == 4:
+                    data2 = np.array(w.wss(','.join(stklist), 'oper_rev', 'rptDate=%s;rtpType=1'%rptDate).Data[0])
+                else:
+                    data2 = np.array(w.wss(','.join(stklist), 'or_ttm', 'tradeDate=%s'%last_tradeDate).Data[0])
+                tmp_data[datelist.index(elt)] = data1 / data2 - 1 
+            elif factorname == 'GP':
+                data = np.array(w.wss(','.join(stklist), 'qfa_grossprofitmargin', 'rptDate=%s'%rptDate).Data[0])
+                tmp_data[datelist.index(elt)] = data
+                
+            elif factorname == 'quick_ratio':
+                data = np.array(w.wss(','.join(stklist), 'quick', 'rptDate=%s'%rptDate).Data[0])
+                tmp_data[datelist.index(elt)] = data
+            elif factorname == 'netprofitmargin':
+                data = np.array(w.wss(','.join(stklist), 'qfa_netprofitmargin', 'rptDate=%s'%rptDate).Data[0])
+                tmp_data[datelist.index(elt)] = data
+            else:
+                data = np.array(w.wss(','.join(stklist), factorname, 'rptDate=%s'%rptDate).Data[0])
+                tmp_data[datelist.index(elt)] = data
+            
+        if findata_original.size == 0:
+            sio.savemat(DATAPATH+'finfactor/'+factorname+'.mat', mdict={factorname:tmp_data})
+        else:
+            findata_original = np.vstack((findata_original, tmp_data))
+            sio.savemat(DATAPATH+'finfactor/'+factorname+'.mat', mdict={factorname:findata_original})
+
     def __del__(self):
         w.stop()
-        
 
