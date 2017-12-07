@@ -779,7 +779,7 @@ class WindPyInf(object):
             sz50_all_daily_ret_original = np.vstack((sz50_all_daily_ret_original, data))
             sio.savemat(DATAPATH+'SZ50_all_daily_ret.mat', mdict={'SZ50_all_daily_ret':sz50_all_daily_ret_original})
 
-    def __write2hs300_file(self, datelist, hs300_all_original):
+    def __write2hs300all_file(self, datelist, hs300_all_original):
         """把H00300指数写入文件
         :datelist:
         :hs300_all_original:
