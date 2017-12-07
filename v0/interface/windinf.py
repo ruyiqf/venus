@@ -121,7 +121,7 @@ class WindPyInf(object):
             if len(market) < len(tdays_data):
                 self.__write2market_file(tdays_data[len(market):], market)
             else:
-                self.info('全A指数已经更新到最新')
+                self.log.info('全A指数已经更新到最新')
         else:
             self.__write2market_file(tdays, np.array([]))
 
@@ -170,8 +170,8 @@ class WindPyInf(object):
             self.__write2zz500daily_file(tdays_data, np.array([]))
 
         if(os.path.exists(DATAPATH+'ZZ500_overnight_ret.mat')):
-            HS300_overnight_ret = sio.loadmat(DATAPATH+'ZZ500_overnight_ret.mat')['ZZ500_overnight_ret']
-            if len(HS300_overnight_ret) < len(tdays_data):
+            ZZ500_overnight_ret = sio.loadmat(DATAPATH+'ZZ500_overnight_ret.mat')['ZZ500_overnight_ret']
+            if len(ZZ500_overnight_ret) < len(tdays_data):
                 self.__write2zz500overnight_file(tdays_data[len(ZZ500_overnight_ret):],
                     ZZ500_overnight_ret)
             else:
@@ -280,7 +280,7 @@ class WindPyInf(object):
             self.__write2zz500all_file(tdays_data, np.array([]))
         
         if(os.path.exists(DATAPATH+'ZZ500_all_daily_ret.mat')):
-            HS300_all_daily_ret = sio.loadmat(DATAPATH+'ZZ500_all_daily_ret.mat')['ZZ500_all_daily_ret']
+            ZZ500_all_daily_ret = sio.loadmat(DATAPATH+'ZZ500_all_daily_ret.mat')['ZZ500_all_daily_ret']
             if len(ZZ500_all_daily_ret) < len(tdays_data):
                 self.__write2zz500alldailyret_file(tdays_data[len(ZZ500_all_daily_ret):len(tdays_data)], ZZ500_all_daily_ret)
             else:
@@ -326,9 +326,9 @@ class WindPyInf(object):
         tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'tdays_data.mat')['tdays_data'])
         stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
         stklist = [elt[1][0] for elt in stklist]
-        if(os.path.exists(DATAPATH+'newriskfactor/BarrarSmallRisk/EGIBS.mat')):
-            egibs = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk/EGIBS.mat')['EGIBS']
-            egibs_s = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk/EGIBS_s.mat')['EGIBS_s']
+        if(os.path.exists(DATAPATH+'newriskfactor/BarraSmallRisk/EGIBS.mat')):
+            egibs = sio.loadmat(DATAPATH+'newriskfactor/BarraSmallRisk/EGIBS.mat')['EGIBS']
+            egibs_s = sio.loadmat(DATAPATH+'newriskfactor/BarraSmallRisk/EGIBS_s.mat')['EGIBS_s']
             if(len(egibs) < len(tdays_data)):
                 egibs = self.__align_column(egibs, stklist)
                 egibs_s = self.__align_column(egibs_s, stklist)
@@ -344,9 +344,9 @@ class WindPyInf(object):
         tdays_data = self.__convert_mat2list(sio.loadmat(DATAPATH+'finfactor/fin_month.mat')['fin_month'])
         stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
         stklist = [elt[1][0] for elt in stklist]
-        if(os.path.exists(DATAPATH+'newriskfactor/BarrarSmallRisk/EGRO.mat')):
-            egro = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk/EGRO.mat')['EGRO']
-            sgro = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk/SGRO.mat')['SGRO']
+        if(os.path.exists(DATAPATH+'newriskfactor/BarraSmallRisk/EGRO.mat')):
+            egro = sio.loadmat(DATAPATH+'newriskfactor/BarraSmallRisk/EGRO.mat')['EGRO']
+            sgro = sio.loadmat(DATAPATH+'newriskfactor/BarraSmallRisk/SGRO.mat')['SGRO']
             if(len(egro) < len(tdays_data)):
                 egro = self.__align_column(egro, stklist)
                 sgro = self.__align_column(sgro, stklist)
@@ -373,6 +373,7 @@ class WindPyInf(object):
         tmp_egibs_s = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            print(sdate)
             data = w.wss(','.join(stklist), 'west_netprofit_CAGR, west_netprofit_YOY', 'tradeDate=%s'%sdate).Data
             tmp_egibs[i] = np.array(data[0])
             tmp_egibs_s[i] = np.array(data[1])
@@ -760,7 +761,7 @@ class WindPyInf(object):
         if sz50_all_original.size == 0:
             sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':data})
         else:
-            sz50_all_original = np.vstack((original, data))
+            sz50_all_original = np.vstack((sz50_all_original, data))
             sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':sz50_all_original})
 
     def __write2sz50alldailyret_file(self, datelist, sz50_all_daily_ret_original):
@@ -817,10 +818,10 @@ class WindPyInf(object):
         end_date = self.__convert_time_format(datelist[-1])
         data = np.array(w.wsd('H00905.CSI','close',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0])
         data = self.__convert_row2column(data)
-        if hs300_all_original.size == 0:
+        if zz500_all_original.size == 0:
             sio.savemat(DATAPATH+'ZZ500_all.mat', mdict={'ZZ500_all':data})
         else:
-            hs300_all_original = np.vstack((zz500_all_original, data))
+            zz500_all_original = np.vstack((zz500_all_original, data))
             sio.savemat(DATAPATH+'ZZ500_all.mat', mdict={'ZZ500_all':zz500_all_original})
 
     def __write2zz500alldailyret_file(self, datelist, zz500_all_daily_ret_original):

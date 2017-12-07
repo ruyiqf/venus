@@ -542,7 +542,7 @@ class OracleDbInf(object):
         stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
         stklist = [elt[1][0] for elt in stklist]
         if(os.path.exists(DATAPATH+'newriskfactor/BarraSmallRisk/EPFWD.mat')):
-            epfwd = sio.loadmat(DATAPATH+'newriskfactor/BarrarSmallRisk')['EPFWD']
+            epfwd = sio.loadmat(DATAPATH+'newriskfactor/BarraSmallRisk/EPFWD.mat')['EPFWD']
             if(len(epfwd) < len(tdays_data)):
                 epfwd = self.__align_column(epfwd, stklist)
                 self.__write2epfwd_file(tdays_data[len(epfwd):], epfwd, stklist)
@@ -1709,7 +1709,7 @@ class OracleDbInf(object):
             for k in range(len(stklist)):
                 if stklist[k] in s_info_windcode:
                     idx = s_info_windcode.index(stklist[k]) 
-                    epfwd.append(np.nan if epfwd[idx] == None else ets_pe[idx])
+                    epfwd.append(np.nan if est_pe[idx] == None else est_pe[idx])
                 else:
                     epfwd.append(np.nan)
             tmp_epfwd[i] = 1.0 / np.array(epfwd)
@@ -1717,5 +1717,5 @@ class OracleDbInf(object):
         if epfwd_original.size == 0:
             sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EPFWD.mat', mdict={'EPFWD':tmp_epfwd})
         else:
-            epfwd_original = np.vstack((efpwd_original, tmp_epfwd))
+            epfwd_original = np.vstack((epfwd_original, tmp_epfwd))
             sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EPFWD.mat', mdict={'EPFWD':epfwd_original})
