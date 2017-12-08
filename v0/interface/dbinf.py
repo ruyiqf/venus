@@ -550,6 +550,38 @@ class OracleDbInf(object):
                 self.log.info('EPFWD因子更新完毕')
         else:
             self.__write2epfwd_file(tdays_data, np.array([]), stklist)
+
+    def db_download_dividend12m_factor(self):
+        """更新股息率因子
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/dividend12M.mat')):
+            dividend12m = sio.loadmat(DATAPATH+'daily_factor/dividend12M.mat')['dividend12M']
+            if(len(dividend12m) < len(tdays_data)):
+                dividend12m = self.__align_column(dividend12m, stklist)
+                self.__write2dividend12m_file(tdays_data[len(dividend12m):], dividend12m, stklist)
+            else:
+                self.log.info('股息率因子更新完毕')
+        else:
+            self.__write2dividend12m_file(tdays_data, np.array([]), stklist)
+
+    def db_download_tmv_factor(self):
+        """更新总市值因子
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/TMV.mat')):
+            tmv = sio.loadmat(DATAPATH+'daily_factor/TMV.mat')['TMV']
+            if(len(tmv) < len(tdays_data)):
+                tmv = self.__align_column(tmv, stklist)
+                self.__write2tmv_file(tdays_data[len(tmv):], tmv, stklist)
+            else:
+                self.log.info('总市值因子更新完毕')
+        else:
+            self.__write2tmv_file(tdays_data, np.array([]), stklist)
         
     def __convert_mat2list(self, mat_ndarray):
         """把mat的高维数据转换成list类型
@@ -889,14 +921,6 @@ class OracleDbInf(object):
         tmp_open = np.zeros((len(datelist),len(stklist)))
         tmp_high = np.zeros((len(datelist),len(stklist)))
         tmp_low = np.zeros((len(datelist),len(stklist)))
-
-        print(np.shape(tmp_open))
-        print(np.shape(tmp_high))
-        print(np.shape(tmp_low))
-
-        print(np.shape(open_original))
-        print(np.shape(high_original))
-        print(np.shape(low_original))
 
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
@@ -1708,7 +1732,7 @@ class OracleDbInf(object):
             epfwd = list()
             for k in range(len(stklist)):
                 if stklist[k] in s_info_windcode:
-                    idx = s_info_windcode.index(stklist[k]) 
+                    idx = s_info_windcode.index(stklist[k])
                     epfwd.append(np.nan if est_pe[idx] == None else est_pe[idx])
                 else:
                     epfwd.append(np.nan)
@@ -1719,3 +1743,71 @@ class OracleDbInf(object):
         else:
             epfwd_original = np.vstack((epfwd_original, tmp_epfwd))
             sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EPFWD.mat', mdict={'EPFWD':epfwd_original})
+    
+    def __write2dividend12m_file(self, datelist, dividend12m_original, stklist):
+        """把新股息率因子写入文件
+        :datelist: 时间序列
+        :dividend12m_original: 新股息率的原始因子数据
+        :stklist: 股票列表
+        """
+        cursor = self.conn.cursor()
+        tmp_dividend12m = np.zeros((len(datelist), len(stklist)))
+        for i in range(len(datelist)):
+            date = datetime.datetime.strptime(datelist[i], '%Y/%m/%d')
+            start_date = str(date.year - 2) + '1231'
+            end_date = date.strftime('%Y%m%d')
+            sql = "select a.WIND_CODE,a.CASH_DVD_PER_SH_PRE_TAX,a.S_DIV_BASESHARE,a.REPORT_PERIOD from AShareDividend a,(select WIND_CODE,max(REPORT_PERIOD) as REPORT_PERIOD from AShareDividend where REPORT_PERIOD >= %s and DVD_PAYOUT_DT <= %s group by wind_code) b where a.wind_code = b.wind_code and cast(a.REPORT_PERIOD as int) > cast(b.REPORT_PERIOD as int) - 10000 and cast(a.REPORT_PERIOD as int) <= cast(b.REPORT_PERIOD as int) order by wind_code" % (start_date, end_date)
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 4)
+            wind_code = ret[0]
+            cash_dvd = ret[1]
+            s_div_baseshare = ret[2]
+            report_period = ret[3]
+            dividend = np.array(cash_dvd) * np.array(s_div_baseshare) * 10000
+            dividend12m = list()
+            for k in range(len(stklist)):
+                if stklist[k] in wind_code:
+                    idx = wind_code.index(stklist[k])
+                    dividend12m.append(np.nan if dividend[idx] == None else dividend[idx])
+                else:
+                    dividend12m.append(np.nan)
+            tmp_dividend12m[i] = np.array(dividend12m)
+
+        if dividend12m_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/dividend12M.mat', mdict={'dividend12M':tmp_dividend12m})
+        else:
+            dividend12m_original = np.vstack((dividend12m_original, tmp_dividend12m))
+            sio.savemat(DATAPATH+'daily_factor/dividend12M.mat', mdict={'dividend12M':dividend12m_original})
+         
+    def __write2tmv_file(self, datelist, tmv_original, stklist):
+        """把总市值因子写入文件
+        :datelist:
+        :tmv_original:
+        :stklist:
+        """
+        cursor = self.conn.cursor()
+        tmp_tmv = np.zeros((len(datelist), len(stklist)))
+        for i in range(len(datelist)):
+            sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            sql = "select s_info_windcode,S_VAL_MV from  AShareEODDerivativeIndicator  WHERE TRADE_DT=%s" % sdate
+            cursor.execute(sql)
+            rs = cursor.fetchall()
+            ret = self.__convert_dbdata2tuplelist(rs, 2)
+            s_info_wind_code = ret[0]
+            s_val_mv = ret[1]
+            tmv = list()
+            for k in range(len(stklist)):
+                if stklist[k] in s_info_wind_code:
+                    idx = s_info_wind_code.index(stklist[k])
+                    tmv.append(np.nan if s_val_mv[idx] == None else s_val_mv[idx] * 10000)
+                else:
+                    tmv.append(np.nan)
+            tmp_tmv[i] = np.array(tmv)
+        if tmv_original.size == 0:
+            sio.savemat(DATAPATH+'daily_factor/TMV.mat', mdict={'TMV':tmp_tmv})
+        else:
+            tmv_original = np.vstack((tmv_original, tmp_tmv))
+            sio.savemat(DATAPATH+'daily_factor/TMV.mat', mdict={'TMV':tmv_original})
+        
+         

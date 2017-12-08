@@ -87,7 +87,6 @@ class WindPyInf(object):
         stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
         stklist = [elt[1][0] for elt in stklist]
         for elt in self.financial_factor:
-            print(elt)
             if(os.path.exists(DATAPATH+'finfactor/'+elt+'.mat')):
                 fin_data = sio.loadmat(DATAPATH+'finfactor/'+elt+'.mat')[elt]
                 if len(fin_data) < len(tmonth_data):
@@ -373,7 +372,6 @@ class WindPyInf(object):
         tmp_egibs_s = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
-            print(sdate)
             data = w.wss(','.join(stklist), 'west_netprofit_CAGR, west_netprofit_YOY', 'tradeDate=%s'%sdate).Data
             tmp_egibs[i] = np.array(data[0])
             tmp_egibs_s[i] = np.array(data[1])
@@ -848,7 +846,6 @@ class WindPyInf(object):
         """
         tmp_data = np.zeros((len(datelist), len(stklist)))
         for elt in datelist:
-            print(elt)
             date = datetime.datetime.strptime(elt, '%Y/%m/%d')
             month = date.month
             year = date.year

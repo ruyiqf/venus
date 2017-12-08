@@ -1,6 +1,7 @@
 #coding:GBK
 import os
 import sys
+import datetime
 from v0.interface import OracleDbInf
 from v0.interface import WindPyInf
 
@@ -19,6 +20,7 @@ class DataFresh(object):
 
 def main():
     df = DataFresh()
+    start_time = datetime.datetime.now()
     print(CUTOFFDASH+'更新交易日期(WIND)'+CUTOFFDASH)
     df.wpi.wind_download_trading_days()
     print(CUTOFFDASH+'更新交易月数据(WIND)'+CUTOFFDASH)
@@ -95,8 +97,13 @@ def main():
     df.wpi.wind_download_profit_pred_value()
     print(CUTOFFDASH+'更新市值因子(WIND)'+CUTOFFDASH)
     df.wpi.wind_download_market_value()
+    print(CUTOFFDASH+'更新股息率因子'+CUTOFFDASH)
+    df.odi.db_download_dividend12m_factor()
+    print(CUTOFFDASH+'更新总市值'+CUTOFFDASH)
+    df.odi.db_download_tmv_factor()
+    end_time = datetime.datetime.now()
     print(ACCOMPLISH)
-    
+    print('总耗时:%s'%str(end_time - start_time))
 
 if __name__ == '__main__':
     main()
