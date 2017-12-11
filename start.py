@@ -104,6 +104,7 @@ def main():
     end_time = datetime.datetime.now()
     print(ACCOMPLISH)
     print('总耗时:%s'%str(end_time - start_time))
+    print('更新时间戳:%s'%end_time)
 
 if __name__ == '__main__':
     main()

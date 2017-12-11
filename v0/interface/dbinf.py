@@ -1765,6 +1765,10 @@ class OracleDbInf(object):
             s_div_baseshare = ret[2]
             report_period = ret[3]
             dividend = np.array(cash_dvd) * np.array(s_div_baseshare) * 10000
+            df = DataFrame({'code':wind_code, 'value':dividend})
+            dfsum = df.groupby(by=['code'])['value'].sum()
+            wind_code = list(dfsum.index) 
+            dividend = dfsum.values
             dividend12m = list()
             for k in range(len(stklist)):
                 if stklist[k] in wind_code:
