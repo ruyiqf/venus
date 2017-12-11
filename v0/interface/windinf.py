@@ -717,21 +717,6 @@ class WindPyInf(object):
             original = np.vstack((original, tmp_profitpred4w))
             sio.savemat(DATAPATH+'daily_factor/profit_pred_4w.mat', mdict={'profit_pred_4w':original})
 
-    def __write2sz50all_file(self, datelist, sz50_all_original):
-        """把H00016指数写入文件
-        :datelist:
-        :sz50_all_original:
-        """
-        start_date = self.__convert_time_format(datelist[0])
-        end_date = self.__convert_time_format(datelist[-1])
-        data = np.array(w.wsd('H00016.SH','close',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0])
-        data = self.__convert_row2column(data)
-        if sz50_all_original.size == 0:
-            sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':data})
-        else:
-            sz50_all_original = np.vstack((original, data))
-            sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':sz50_all_original})
-
     def __write2sz50alldailyret_file(self, datelist, sz50_all_daily_ret_original):
         """把H00016指数收益率写入文件
         :datelist:
@@ -762,20 +747,6 @@ class WindPyInf(object):
             sz50_all_original = np.vstack((sz50_all_original, data))
             sio.savemat(DATAPATH+'SZ50_all.mat', mdict={'SZ50_all':sz50_all_original})
 
-    def __write2sz50alldailyret_file(self, datelist, sz50_all_daily_ret_original):
-        """把H00016指数收益率写入文件
-        :datelist:
-        :sz50_all_daily_ret_original:
-        """
-        start_date = self.__convert_time_format(datelist[0])
-        end_date = self.__convert_time_format(datelist[-1])
-        data = np.array(w.wsd('H00016.SH','pct_chg',start_date,end_date,'Fill=Previous','PriceAdj=F').Data[0]) / 100.0
-        data = self.__convert_row2column(data) 
-        if sz50_all_daily_ret_original.size == 0:
-            sio.savemat(DATAPATH+'SZ50_all_daily_ret.mat', mdict={'SZ50_all_daily_ret':data})
-        else:
-            sz50_all_daily_ret_original = np.vstack((sz50_all_daily_ret_original, data))
-            sio.savemat(DATAPATH+'SZ50_all_daily_ret.mat', mdict={'SZ50_all_daily_ret':sz50_all_daily_ret_original})
 
     def __write2hs300all_file(self, datelist, hs300_all_original):
         """把H00300指数写入文件
