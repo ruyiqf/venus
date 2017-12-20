@@ -17,6 +17,11 @@
       <li><a href="http://vue-loader.vuejs.org/" target="_blank">vue-loader</a></li>
       <li><a href="https://github.com/vuejs/awesome-vue" target="_blank">awesome-vue</a></li>
     </ul>
+    <ul>
+      <li v-for="article in articles">
+        {{article.title}}
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -25,8 +30,17 @@ export default {
   name: 'hello',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      msg: '',
+      articles: []
     }
+  },
+  mounted () {
+    this.$http.get('api/interface/search/all').then((response) => {
+      this.articles = response.body
+      console.log(this.articles)
+    }, (response) => {
+      this.articles = ['euxyacg0', 'euxyacg1', 'euxyacg2']
+    })
   }
 }
 </script>

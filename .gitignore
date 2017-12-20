@@ -76,5 +76,5 @@ gen
 data/
 
 # Website files
-.website/node_modules/
+website/node_modules/
 

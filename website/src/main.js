@@ -3,7 +3,9 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
+import VueRecource from 'vue-resource'
 
+Vue.use(VueRecource)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
