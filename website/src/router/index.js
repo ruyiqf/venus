@@ -4,7 +4,6 @@ import Hello from '@/components/Hello'
 import DataCenter from '@/components/DataCenter'
 
 Vue.use(Router)
-
 export default new Router({
   routes: [
     {

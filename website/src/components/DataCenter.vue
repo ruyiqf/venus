@@ -1,53 +1,35 @@
 <template>
-    <div class="datacenter">
-        <table>
-            <thead>
-            <tr>
-            <th>Regian</th>
-            <th>Q1 2010</th>
-            <th>Q2 2010</th>
-            <th>Q3 2010</th>
-            <th>Q4 2010</th>
-            </tr>
-            </thead>
-            <tbody>
-                <tbody class="labels">
-                <tr>
-                    <td colspan="5">
-                        <label for="accounting">Accounting</label>
-                        <input type="checkbox" name="accounting" id="accounting" data-toggle="toggle">
-                    </td>
-                </tr>
-                </tbody>
+    <div>
+        <b-alert show>Default Alert</b-alert>
 
-                <tbody class="hide">
-                    <tr>
-                        <td>Australia</td>
-                        <td>$7,685.00</td>
-                        <td>$3,544.00</td>
-                        <td>$5,834.00</td>
-                        <td>$10,583.00</td>
-                    </tr>
-                </tbody>
-            <tbody class="labels">
-                <tr>
-                    <td colspan="5">
-                        <label for="management">Management</label>
-                        <input type="checkbox" name="management" id="management" data-toggle="toggle">
-                    </td>
-                </tr>
-            </tbody>
-            <tbody class="hide">
-            <tr>
-                <td>Australia</td>
-                <td>$7,685.00</td>
-                <td>$3,544.00</td>
-                <td>$5,834.00</td>
-                <td>$10,583.00</td>
-            </tr>
-            </tbody>
-            </tbody>
-        </table>
+        <b-alert variant="success" show>Success Alert</b-alert>
+
+        <b-alert variant="danger"
+                 dismissible
+                 :show="showDismissibleAlert"
+                 @dismissed="showDismissibleAlert=false">
+            Dismissible Alert!
+        </b-alert>
+
+        <b-alert :show="dismissCountDown"
+                 dismissible
+                 variant="warning"
+                 @dismissed="dismissCountDown=0"
+                 @dismiss-count-down="countDownChanged">
+            <p>This alert will dismiss after {{dismissCountDown}} seconds...</p>
+            <b-progress variant="warning"
+                        :max="dismissSecs"
+                        :value="dismissCountDown"
+                        height="4px">
+            </b-progress>
+        </b-alert>
+
+        <b-btn @click="showAlert" variant="info" class="m-1">
+            Show alert with count-down timer
+        </b-btn>
+        <b-btn @click="showDismissibleAlert=true" variant="info" class="m-1">
+            Show dismissible alert ({{showDismissibleAlert?'visible':'hidden'}})
+        </b-btn>
     </div>
 </template>
 
@@ -61,37 +43,4 @@
     }
 </script>
 <style>
-    table {
-        width: 750px;
-        border-collapse: collapse;
-        margin:50px auto;
-    }
-
-    th {
-        background: #3498db;
-        color: white;
-        font-weight: bold;
-    }
-
-    td, th {
-        padding: 10px;
-        border: 1px solid #ccc;
-        text-align: left;
-        font-size: 18px;
-    }
-
-    .labels tr td {
-        background-color: #2cc16a;
-        font-weight: bold;
-        color: #fff;
-    }
-
-    .label tr td label {
-        display: block;
-    }
-
-
-    [data-toggle="toggle"] {
-        display: none;
-    }
 </style>

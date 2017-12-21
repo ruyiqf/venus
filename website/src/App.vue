@@ -19,4 +19,5 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
+  @import 'css/fontawesome-free-5.0.2/web-fonts-with-css/css/fontawesome-all.min.css'
 </style>
