@@ -1,7 +1,6 @@
 #coding:GBK
 import os
 import sys
-import time
 import scipy.io as sio
 import pandas as pd
 import numpy as np
@@ -10,6 +9,7 @@ from pandas import Series, DataFrame
 from WindPy import *
 
 import datetime
+from time import sleep
 
 from ..loghandler import DefaultLogHandler
 
@@ -98,19 +98,6 @@ class WindPyInf(object):
             else:
                 self.__write2findata_file(tmonth_data, np.array([]), stklist, elt)
 
-    def wind_download_market_revenue_ratio(self):
-        """提取交易日指数收益率
-        """
-        tdays_data = self.tdays_data
-        if(os.path.exists(DATAPATH+'Ind_daily.mat')):
-            ind_pct_chg = sio.loadmat(DATAPATH+'Ind_daily.mat')['ind_pct_chg']
-            if len(ind_pct_chg) < len(tdays_data):
-                self.__write2inddaily_file(tdays_data[len(ind_pct_chg):], ind_pct_chg) 
-            else:
-                self.log.info('交易日指数已经更新')
-        else:
-            self.__write2inddaily_file(tdays_data, np.array([]))
-
     def wind_download_wholea_revenue_ratio(self):
         """提取市场全A指数收益率
         """
@@ -168,16 +155,6 @@ class WindPyInf(object):
         else:
             self.__write2zz500daily_file(tdays_data, np.array([]))
 
-        if(os.path.exists(DATAPATH+'ZZ500_overnight_ret.mat')):
-            ZZ500_overnight_ret = sio.loadmat(DATAPATH+'ZZ500_overnight_ret.mat')['ZZ500_overnight_ret']
-            if len(ZZ500_overnight_ret) < len(tdays_data):
-                self.__write2zz500overnight_file(tdays_data[len(ZZ500_overnight_ret):],
-                    ZZ500_overnight_ret)
-            else:
-                self.log.info('ZZ500隔夜收益已经更新到最新')
-        else:
-            self.__write2zz500overnight_file(tdays_data, np.array([]))
-
         if(os.path.exists(DATAPATH+'ZZ500.mat')):
             ZZ500 = sio.loadmat(DATAPATH+'ZZ500.mat')['ZZ500']
             if len(ZZ500) < len(tdays_data):
@@ -200,16 +177,6 @@ class WindPyInf(object):
                 self.log.info('HS300已经更新到最新')
         else:
             self.__write2hs300daily_file(tdays_data, np.array([]))
-
-        if(os.path.exists(DATAPATH+'HS300_overnight_ret.mat')):
-            HS300_overnight_ret = sio.loadmat(DATAPATH+'HS300_overnight_ret.mat')['HS300_overnight_ret']
-            if len(HS300_overnight_ret) < len(tdays_data):
-                self.__write2hs300overnight_file(tdays_data[len(HS300_overnight_ret):],
-                    HS300_overnight_ret)
-            else:
-                self.log.info('HS300隔夜收益已经更新到最新')
-        else:
-            self.__write2hs300overnight_file(tdays_data, np.array([]))
         
         if(os.path.exists(DATAPATH+'HS300.mat')):
             HS300 = sio.loadmat(DATAPATH+'HS300.mat')['HS300']
@@ -448,44 +415,6 @@ class WindPyInf(object):
             tweeks_array = np.concatenate([original, tweeks_array], axis=0)
         sio.savemat(DATAPATH+'tdays_data_week', mdict={'tdays_data_week':tweeks_array})
         self.tweeks_array = tweeks_array 
-
-    def __write2inddaily_file(self, datelist, original):
-        """根据配置文件获取市场指数收益率
-        :datelist: 时间序列 
-        :original: 原有的数据
-        """
-        start_date = datetime.datetime.strptime(datelist[0], '%Y/%m/%d').strftime('%Y%m%d')
-        end_date = datetime.datetime.strptime(datelist[-1], '%Y/%m/%d').strftime('%Y%m%d')
-        data = w.wsd(self.conf['index_list'], 'pct_chg',
-                start_date, end_date,
-                'Fill=Previous', 'PriceAdj=F')
-        pct_chg = np.zeros((len(datelist), len(data.Codes)))
-        ind_name = np.array(w.wsd(self.conf['index_list'], 'sec_name').Data[0])
-        ind_code = np.array(w.wsd(self.conf['index_list'], 'trade_code').Data[0])
-
-        if len(datelist) > 1:
-            #按照列排列
-            for i in range(len(data.Codes)):
-                pct_chg[:,i] = np.array(data.Data[i]) / 100.0 
-
-        if len(datelist) == 1:
-            pct_chg[0] = np.array(data.Data[0]) / 100.0
-            
-        if original.size == 0 :
-            sio.savemat(DATAPATH+'Ind_daily', mdict={'ind_pct_chg': pct_chg})
-            original = np.zeros(np.shape(pct_chg))
-            original = pct_chg
-        else:
-            original = np.vstack((original, pct_chg))
-            sio.savemat(DATAPATH+'Ind_daily', mdict={'ind_pct_chg': original})
-        self.log.info(ind_name)
-        self.log.info(ind_code)
-
-        #计算行业近10天的收益率的动量这里重新计算
-        ind_momentum = np.zeros(np.shape(original))
-        for i in range(10, len(original)):
-            ind_momentum[i] = np.prod(original[i-10:i]+1, axis=0) - 1
-        sio.savemat(DATAPATH+'ind_momentum', mdict={'ind_momentum':ind_momentum})
         
     def __write2market_file(self, datelist, original):
         """获取全A指数收益率
@@ -516,11 +445,13 @@ class WindPyInf(object):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
             data1 = w.wss(','.join(stklist), 'industry2', 'industryType=1;industryStandard=1;tradeDate=%s'%sdate).Data[0]
             data2 = w.wss(','.join(stklist), 'industry2', 'industryType=1;industryStandard=2;tradeDate=%s'%sdate).Data[0]
+            print(data1)
+            print(data2)
             for i in range(len(data1)):
                 if (data1[i] != None) and (data1[i] in new_ind_name):
-                    ind_list.append(new_ind_name.index(data1[i]))
+                    ind_list.append(new_ind_name.index(data1[i]) + 1)
                 elif (data2[i] != None) and (data2[i] in new_ind_name):
-                    ind_list.append(new_ind_name.index(data2[i]))
+                    ind_list.append(new_ind_name.index(data2[i]) + 1)
                 else:
                     ind_list.append(0)
             try:
@@ -528,6 +459,7 @@ class WindPyInf(object):
             except ValueError as e:
                 print(data1)
                 print('We find a dimension mismatch error')
+            sleep(1)
 
         tmp_array = np.delete(tmp_array, [0], axis=0)
         if(original.size == 0):
@@ -595,38 +527,6 @@ class WindPyInf(object):
         else:
             original = np.vstack((original, data))
             sio.savemat(DATAPATH+'HS300_daily_ret.mat', mdict={'HS300_daily_ret':original})
-
-    def __write2hs300overnight_file(self, datelist, original):
-        """把沪深300的隔日收益率写入mat文件
-        :datelist: 更新日期区间
-        :original: 原始数据
-        """
-        start_date = self.__convert_time_format(datelist[0])
-        end_date = self.__convert_time_format(datelist[-1])
-        data = w.wsd('000300.SH','pre_close,open',start_date,end_date,'Fill=Previous','PriceAdj=F').Data
-        data = np.array(data[1]) / np.array(data[0]) - 1
-        data = self.__convert_row2column(data) 
-        if original.size == 0:
-            sio.savemat(DATAPATH+'HS300_overnight_ret.mat', mdict={'HS300_overnight_ret':data})
-        else:
-            original = np.vstack((original, data))
-            sio.savemat(DATAPATH+'HS300_overnight_ret.mat', mdict={'HS300_overnight_ret':original})
-
-    def __write2zz500overnight_file(self, datelist, original):
-        """把中证500的隔日收益率写入mat文件
-        :datelist: 更新日期区间
-        :original: 原始数据
-        """
-        start_date = self.__convert_time_format(datelist[0])
-        end_date = self.__convert_time_format(datelist[-1])
-        data = w.wsd('000905.SH','pre_close,open',start_date,end_date,'Fill=Previous','PriceAdj=F').Data
-        data = np.array(data[1]) / np.array(data[0]) - 1
-        data = self.__convert_row2column(data) 
-        if original.size == 0:
-            sio.savemat(DATAPATH+'ZZ500_overnight_ret.mat', mdict={'ZZ500_overnight_ret':data})
-        else:
-            original = np.vstack((original, data))
-            sio.savemat(DATAPATH+'ZZ500_overnight_ret.mat', mdict={'ZZ500_overnight_ret':original})
 
     def __write2hs300_file(self, datelist, original):
         """把沪深300写入mat文件
@@ -852,18 +752,22 @@ class WindPyInf(object):
                 tmp_data[datelist.index(elt)] = data
             elif factorname == 'netprofit_ttm':
                 data1 = np.array(w.wss(','.join(stklist), 'netprofit_ttm', 'tradeDate=%s' % tradeDate).Data[0])
+                """
                 if month == 4:
-                    data2 = np.array(w.wss(','.join(stklist), 'np_belongto_parcomsh', 'rptDate=%s;rtpType=1'%rptDate).Data[0])
+                    data2 = np.array(w.wss(','.join(stklist), 'np_belongto_parcomsh', 'rptDate=%s;rtpType=1'%last_rptDate).Data[0])
                 else:
                     data2 = np.array(w.wss(','.join(stklist), 'netprofit_ttm', 'tradeDate=%s'%last_tradeDate).Data[0])
-                tmp_data[datelist.index(elt)] = data1 / data2 - 1 
+                """
+                tmp_data[datelist.index(elt)] = data1
             elif factorname == 'or_ttm':
-                data2 = np.array(w.wss(','.join(stklist), 'or_ttm', 'tradeDate=%s' % tradeDate).Data[0])
+                data1 = np.array(w.wss(','.join(stklist), 'or_ttm', 'tradeDate=%s' % tradeDate).Data[0])
+                """
                 if month == 4:
-                    data2 = np.array(w.wss(','.join(stklist), 'oper_rev', 'rptDate=%s;rtpType=1'%rptDate).Data[0])
+                    data2 = np.array(w.wss(','.join(stklist), 'oper_rev', 'rptDate=%s;rtpType=1'%last_rptDate).Data[0])
                 else:
                     data2 = np.array(w.wss(','.join(stklist), 'or_ttm', 'tradeDate=%s'%last_tradeDate).Data[0])
-                tmp_data[datelist.index(elt)] = data1 / data2 - 1 
+                """
+                tmp_data[datelist.index(elt)] = data1
             elif factorname == 'GP':
                 data = np.array(w.wss(','.join(stklist), 'qfa_grossprofitmargin', 'rptDate=%s'%rptDate).Data[0])
                 tmp_data[datelist.index(elt)] = data

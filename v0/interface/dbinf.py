@@ -20,8 +20,6 @@ class OracleDbInf(object):
     """
     def __init__(self):
         self.log = DefaultLogHandler(name=__name__,filepath='./log/db.log',log_type='file')
-        #记录上次更新的时间区间
-        self.update_date_area = tuple()
         with open(CONFILE) as f:
             conf = json.load(f)
         try:
@@ -38,8 +36,6 @@ class OracleDbInf(object):
         #需要依赖tdays_data数据
         tdays_data = sio.loadmat(DATAPATH+'tdays_data')['tdays_data']
         l_tdays = len(tdays_data)
-
-        self.update_date_area = (tdays_data[0][0][0],tdays_data[-1][0][0])
 
         #更新stock.mat数据每日更新一次
         dnow = datetime.datetime.now()
@@ -85,10 +81,9 @@ class OracleDbInf(object):
             else:
                 self.log.info('A_ST_stock_d已经最新无须更新')
         else:
-            A_ST_stock_d = np.zeros(len(stklist))
             self.__write2aststockd_file(stklist,
                     tdays_data,
-                    A_ST_stock_d)
+                    np.array([]))
         
     def db_download_stock_trade_able(self):
         """更新stock_trade_able表格
@@ -617,7 +612,7 @@ class OracleDbInf(object):
         :dstlist: 目标列表
         """
         s = set(dstlist)
-        return [1 if elt in s else np.nan for elt in srclist]
+        return [1 if elt in s else 0 for elt in srclist]
             
     def __write2aststockd_file(self, stklist, datelist, original):
         """把全A股票矩阵写入mat文件
@@ -626,6 +621,7 @@ class OracleDbInf(object):
         :original: 原时间数列函数
         """
         cursor = self.conn.cursor()
+        tmp = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i][0][0], '%Y/%m/%d').strftime('%Y%m%d')
             sql1 = 'select s_info_windcode from Asharedescription where cast(s_info_listdate as integer) <= %s and (cast(s_info_delistdate as integer) > %s or s_info_delistdate is null)' % (sdate, sdate)
@@ -638,11 +634,14 @@ class OracleDbInf(object):
             cursor.execute(sql2)
             rs2 = cursor.fetchall()
             rs2 = np.array(self.__compare_two_list(stklist, [elt[0] for elt in rs2]))
-            tmp = rs1-rs2
-            original = np.vstack((original, tmp))
-        if np.all(original[0] == 0):
-            original = np.delete(original, [0], axis=0)
-        sio.savemat(DATAPATH+'A_ST_stock_d', mdict={'A_ST_stock_d': original})
+            tmp[i] = rs1-rs2
+            tmp[i][tmp[i] == 0] = np.nan
+
+        if original.size == 0:
+            sio.savemat(DATAPATH+'A_ST_stock_d', mdict={'A_ST_stock_d': tmp})
+        else:
+            original = np.vstack((original,tmp))
+            sio.savemat(DATAPATH+'A_ST_stock_d', mdict={'A_ST_stock_d': original})
 
     def __write2indcitic_file(self, datelist, ind_code_name, ind_name, original, stklist):
         """写入中信行业分类
