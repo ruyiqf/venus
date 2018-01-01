@@ -751,6 +751,7 @@ class OracleDbInf(object):
         cursor = self.conn.cursor()
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            print(sdate)
             sql = 'select s_info_windcode,s_dq_tradestatus from  AShareEODPrices  WHERE trade_dt=%s' % sdate
             cursor.execute(sql)
             rs = cursor.fetchall()
@@ -828,6 +829,7 @@ class OracleDbInf(object):
         tmp_tr = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            print(sdate)
             sql = 'select s_info_windcode,s_dq_close,s_dq_adjfactor,s_dq_volume,s_dq_amount from  AShareEODPrices   WHERE trade_dt=%s'%sdate
             cursor.execute(sql)
             rs = cursor.fetchall()
@@ -923,6 +925,7 @@ class OracleDbInf(object):
 
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            print(sdate)
             sql = 'select s_info_windcode,s_dq_open,s_dq_high,s_dq_low from  AShareEODPrices   WHERE trade_dt=%s' % sdate
             cursor.execute(sql)
             rs = cursor.fetchall()
@@ -996,6 +999,7 @@ class OracleDbInf(object):
         tmp_cfp = np.zeros((len(datelist),len(stklist)))
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            print(sdate)
             sql = 'select s_info_windcode,s_val_pb_new,s_val_pe_ttm,s_val_ps_ttm,s_val_pcf_ocfttm from  AShareEODDerivativeIndicator   WHERE trade_dt=%s' % sdate
             cursor.execute(sql)
             rs = cursor.fetchall()
@@ -1093,6 +1097,7 @@ class OracleDbInf(object):
 
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            print(sdate)
             sql = 'select s_info_windcode,s_wrating_upgrade from  AShareStockRatingConsus WHERE rating_dt=%s and s_wrating_cycle=0263002000' % sdate
             cursor.execute(sql)
             rs = cursor.fetchall()
@@ -1132,6 +1137,7 @@ class OracleDbInf(object):
 
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            print(sdate)
             sql = "select s_info_windcode,est_roe,est_pe,est_pb,est_peg from  AshareConsensusRollingData   WHERE rolling_type='FY1' and est_dt=%s" % sdate
             cursor.execute(sql)
             rs = cursor.fetchall()
