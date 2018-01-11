@@ -498,21 +498,6 @@ class OracleDbInf(object):
                 self.log.info('上市时间更新完毕')
         else:
             self.__write2listdate_file(stklist)
-    
-    def db_download_industry29_factor(self):
-        """更新29个行业因子
-        """
-        tdays_data = self.tdays_data
-        indlist = sio.loadmat(DATAPATH+'ind_code_name_CITIC_29.mat')['ind_code_name_CITIC_29']
-        indlist = [elt[0][0] for elt in indlist]
-        if(os.path.exists(DATAPATH+'indIndex_CITIC_29.mat')):
-            indindex_citic29 = sio.loadmat(DATAPATH+'indIndex_CITIC_29.mat')['indIndex_CITIC_29']
-            if(len(indindex_citic29) < len(tdays_data)):
-                self.__write2ind29_file(tdays_data[len(indindex_citic29):], indindex_citic29, indlist)
-            else:
-                self.log.info('上市时间更新完毕')
-        else:
-            self.__write2ind29_file(tdays_data, np.array([]), indlist)
         
     def db_download_totalmv_factor(self):
         """更新总市值因子
@@ -562,22 +547,6 @@ class OracleDbInf(object):
         else:
             self.__write2dividend12m_file(tdays_data, np.array([]), stklist)
 
-    def db_download_tmv_factor(self):
-        """更新总市值因子
-        """
-        tdays_data = self.tdays_data
-        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
-        stklist = [elt[1][0] for elt in stklist]
-        if(os.path.exists(DATAPATH+'daily_factor/TMV.mat')):
-            tmv = sio.loadmat(DATAPATH+'daily_factor/TMV.mat')['TMV']
-            if(len(tmv) < len(tdays_data)):
-                tmv = self.__align_column(tmv, stklist)
-                self.__write2tmv_file(tdays_data[len(tmv):], tmv, stklist)
-            else:
-                self.log.info('总市值因子更新完毕')
-        else:
-            self.__write2tmv_file(tdays_data, np.array([]), stklist)
-        
     def __convert_mat2list(self, mat_ndarray):
         """把mat的高维数据转换成list类型
         :mat_ndarray: mat数据格式
@@ -1427,12 +1396,12 @@ class OracleDbInf(object):
             value_diff_small_trader_act = ret[1]
             value_diff_med_trader_act = ret[2]
             value_diff_large_trader_act = ret[3]
-            value_diff_institude_act = ret[4]
+            value_diff_institute_act = ret[4]
             
             volume_diff_small_trader_act = ret[5]
             volume_diff_med_trader_act = ret[6]
             volume_diff_large_trader_act = ret[7]
-            volume_diff_institude_act = ret[8]
+            volume_diff_institute_act = ret[8]
             
             vdsta = list()
             vdmta = list()
@@ -1450,12 +1419,12 @@ class OracleDbInf(object):
                     vdsta.append(np.nan if value_diff_small_trader_act[idx] == None else value_diff_small_trader_act[idx])
                     vdmta.append(np.nan if value_diff_med_trader_act[idx] == None else value_diff_med_trader_act[idx])
                     vdlta.append(np.nan if value_diff_large_trader_act[idx] == None else value_diff_large_trader_act[idx])
-                    vdia.append(np.nan if value_diff_institude_act[idx] == None else value_diff_institude_act[idx])
+                    vdia.append(np.nan if value_diff_institute_act[idx] == None else value_diff_institute_act[idx])
                     
                     odsta.append(np.nan if volume_diff_small_trader_act[idx] == None else volume_diff_small_trader_act[idx])
                     odmta.append(np.nan if volume_diff_med_trader_act[idx] == None else volume_diff_med_trader_act[idx])
                     odlta.append(np.nan if volume_diff_large_trader_act[idx] == None else volume_diff_large_trader_act[idx])
-                    odia.append(np.nan if volume_diff_institude_act[idx] == None else volume_diff_institude_act[idx])
+                    odia.append(np.nan if volume_diff_institute_act[idx] == None else volume_diff_institute_act[idx])
                 else:
                     vdsta.append(np.nan)
                     vdmta.append(np.nan)
@@ -1481,11 +1450,11 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'daily_factor/value_diff_small_trader_act.mat', mdict={'value_diff_small_trader_act':tmp_vdsta})
             sio.savemat(DATAPATH+'daily_factor/value_diff_med_trader_act.mat', mdict={'value_diff_med_trader_act':tmp_vdmta})
             sio.savemat(DATAPATH+'daily_factor/value_diff_large_trader_act.mat', mdict={'value_diff_large_trader_act':tmp_vdlta})
-            sio.savemat(DATAPATH+'daily_factor/value_diff_institude_act.mat', mdict={'value_diff_institute_act':tmp_vdia})
+            sio.savemat(DATAPATH+'daily_factor/value_diff_institute_act.mat', mdict={'value_diff_institute_act':tmp_vdia})
             sio.savemat(DATAPATH+'daily_factor/volume_diff_small_trader_act.mat', mdict={'volume_diff_small_trader_act':tmp_odsta})
             sio.savemat(DATAPATH+'daily_factor/volume_diff_med_trader_act.mat', mdict={'volume_diff_med_trader_act':tmp_odmta})
             sio.savemat(DATAPATH+'daily_factor/volume_diff_large_trader_act.mat', mdict={'volume_diff_large_trader_act':tmp_odlta})
-            sio.savemat(DATAPATH+'daily_factor/volume_diff_institude_act.mat', mdict={'volume_diff_institute_act':tmp_odia})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_institute_act.mat', mdict={'volume_diff_institute_act':tmp_odia})
         else:
             vdsta_original = np.vstack((vdsta_original, tmp_vdsta))
             vdmta_original = np.vstack((vdmta_original, tmp_vdmta))
@@ -1498,11 +1467,11 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'daily_factor/value_diff_small_trader_act.mat', mdict={'value_diff_small_trader_act':vdsta_original})
             sio.savemat(DATAPATH+'daily_factor/value_diff_med_trader_act.mat', mdict={'value_diff_med_trader_act':vdmta_original})
             sio.savemat(DATAPATH+'daily_factor/value_diff_large_trader_act.mat', mdict={'value_diff_large_trader_act':vdlta_original})
-            sio.savemat(DATAPATH+'daily_factor/value_diff_institude_act.mat', mdict={'value_diff_institute_act':vdia_original})
+            sio.savemat(DATAPATH+'daily_factor/value_diff_institute_act.mat', mdict={'value_diff_institute_act':vdia_original})
             sio.savemat(DATAPATH+'daily_factor/volume_diff_small_trader_act.mat', mdict={'volume_diff_small_trader_act':odsta_original})
             sio.savemat(DATAPATH+'daily_factor/volume_diff_med_trader_act.mat', mdict={'volume_diff_med_trader_act':odmta_original})
             sio.savemat(DATAPATH+'daily_factor/volume_diff_large_trader_act.mat', mdict={'volume_diff_large_trader_act':odlta_original})
-            sio.savemat(DATAPATH+'daily_factor/volume_diff_institude_act.mat', mdict={'volume_diff_institute_act':odia_original})
+            sio.savemat(DATAPATH+'daily_factor/volume_diff_institute_act.mat', mdict={'volume_diff_institute_act':odia_original})
 
     def __write2mfpct_file(self,  datelist, mf_pct_volume_original, mf_pct_value_original, stklist):
         """把流动性因子写入文件
