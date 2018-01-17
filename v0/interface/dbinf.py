@@ -345,6 +345,52 @@ class OracleDbInf(object):
             self.__write2bescfp_file(tdays_data, np.array([]),
                 np.array([]), np.array([]), np.array([]), stklist)
 
+    def _db_download_sp_factor(self):
+        """Only used for debug download single factor
+        """
+        tdays_data = self.tdays_data
+        stklist = sio.loadmat(DATAPATH+'stock.mat')['stock']
+        stklist = [elt[1][0] for elt in stklist]
+        if(os.path.exists(DATAPATH+'daily_factor/SP.mat')):
+            SP = sio.loadmat(DATAPATH+'daily_factor/SP.mat')['SP']
+            if(len(SP) < len(tdays_data)):
+                SP = self.__align_column(SP, stklist)
+                datelist = tdays_data[len(SP):] 
+                tmp_sp = np.zeros((len(datelist),len(stklist)))
+                cursor = self.conn.cursor()
+                for i in range(len(datelist)):
+                    sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+                    print(sdate)
+                    sql = 'select s_info_windcode,s_val_pb_new,s_val_pe_ttm,s_val_ps_ttm,s_val_pcf_ocfttm from  AShareEODDerivativeIndicator   WHERE trade_dt=%s' % sdate
+                    cursor.execute(sql)
+                    rs = cursor.fetchall()
+                    ret = self.__convert_dbdata2tuplelist(rs, 5)
+                    s_info_windcode = ret[0]
+                    s_val_pb_new = ret[1]
+                    s_val_pe_ttm = ret[2]
+                    s_val_ps_ttm = ret[3]
+                    s_val_pcf_ocfttm = ret[4]
+                    bp = list()
+                    ep = list()
+                    sp = list()
+                    cfp = list()
+                    for k in range(len(stklist)):
+                        if stklist[k] in s_info_windcode:
+                            idx = s_info_windcode.index(stklist[k]) 
+                            bp.append(np.nan if s_val_pb_new[idx] == None else s_val_pb_new[idx])
+                            ep.append(np.nan if s_val_pe_ttm[idx] == None else s_val_pe_ttm[idx])
+                            sp.append(np.nan if s_val_ps_ttm[idx] == None else s_val_ps_ttm[idx])
+                            cfp.append(np.nan if s_val_pcf_ocfttm[idx] == None else s_val_pcf_ocfttm[idx])
+                        else:
+                            bp.append(np.nan)
+                            ep.append(np.nan)
+                            sp.append(np.nan)
+                            cfp.append(np.nan)
+
+                    tmp_sp[i] = 1.0 / np.array(sp)
+            sp_original = np.vstack((SP, tmp_sp))
+            sio.savemat(DATAPATH+'daily_factor/SP.mat', mdict={'SP':sp_original})
+
     def db_download_cagr_factor(self):
         """更新cagr因子
         """
@@ -869,13 +915,13 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'TR.mat', mdict={'TR':TR_original})
 
         #计算前复权价格
-        price_forward_adjusted = np.zeros(np.shape(price_original))
-        for i in range(len(price_original)):
-            price_forward_adjusted[i] = price_original[i] * adjfactor_original[i] / adjfactor_original[-1]
-        self.price_forward_adjusted = price_forward_adjusted 
+        #price_forward_adjusted = np.zeros(np.shape(price_original))
+        #for i in range(len(price_original)):
+        #    price_forward_adjusted[i] = price_original[i] * adjfactor_original[i] / adjfactor_original[-1]
+        #self.price_forward_adjusted = price_forward_adjusted 
 
-        sio.savemat(DATAPATH+'price_forward_adjusted.mat', mdict={'price_forward_adjusted':price_forward_adjusted})
-        sio.savemat(DATAPATH+'daily_factor/price_daily_1.mat', mdict={'price_daily_1':price_original})
+        #sio.savemat(DATAPATH+'price_forward_adjusted.mat', mdict={'price_forward_adjusted':price_forward_adjusted})
+        #sio.savemat(DATAPATH+'daily_factor/price_daily_1.mat', mdict={'price_daily_1':price_original})
 
     def __write2price_file(self, datelist, open_original, high_original,
             low_original, stklist, adjfactor):

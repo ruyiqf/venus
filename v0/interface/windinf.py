@@ -338,10 +338,11 @@ class WindPyInf(object):
         tmp_egibs = np.zeros((len(datelist), len(stklist))) 
         tmp_egibs_s = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
+            print(datelist[i])
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
             data = w.wss(','.join(stklist), 'west_netprofit_CAGR, west_netprofit_YOY', 'tradeDate=%s'%sdate).Data
-            tmp_egibs[i] = np.array(data[0])
-            tmp_egibs_s[i] = np.array(data[1])
+            tmp_egibs[i] = 1.0 / np.array(data[0])
+            tmp_egibs_s[i] = 1.0 / np.array(data[1])
 
         if egibs_original.size == 0:
             sio.savemat(DATAPATH+'newriskfactor/BarraSmallRisk/EGIBS.mat', mdict={'EGIBS':tmp_egibs})
@@ -439,29 +440,34 @@ class WindPyInf(object):
         :stklist: 股票列表函数
         """
         new_ind_name = self.__convert_mat2list(sio.loadmat(DATAPATH+'ind_name.mat')['ind_name'])
-        tmp_array = np.zeros(len(stklist))
+        tmp_array = np.zeros((len(datelist), len(stklist)))
         for i in range(len(datelist)):
+            print(datelist[i])
             ind_list = list()
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
             data1 = w.wss(','.join(stklist), 'industry2', 'industryType=1;industryStandard=1;tradeDate=%s'%sdate).Data[0]
             data2 = w.wss(','.join(stklist), 'industry2', 'industryType=1;industryStandard=2;tradeDate=%s'%sdate).Data[0]
-            print(data1)
-            print(data2)
-            for i in range(len(data1)):
-                if (data1[i] != None) and (data1[i] in new_ind_name):
-                    ind_list.append(new_ind_name.index(data1[i]) + 1)
-                elif (data2[i] != None) and (data2[i] in new_ind_name):
-                    ind_list.append(new_ind_name.index(data2[i]) + 1)
+            for j in range(len(data1)):
+                if (data1[j] != None) and (data1[j] in new_ind_name):
+                    ind_list.append(new_ind_name.index(data1[j]) + 1)
+                elif (data2[j] != None) and (data2[j] in new_ind_name):
+                    ind_list.append(new_ind_name.index(data2[j]) + 1)
                 else:
-                    ind_list.append(0)
+                    self.log.info('没有找到对应的行业属性的下标')
+                    ind_list.append(tmp_array[i-1, j])
             try:
-                tmp_array = np.vstack((tmp_array, np.array(ind_list)))
+                tmp_array[i] = ind_list
             except ValueError as e:
                 print(data1)
                 print('We find a dimension mismatch error')
             sleep(1)
 
-        tmp_array = np.delete(tmp_array, [0], axis=0)
+        df = DataFrame(tmp_array)
+        df[df==0] = np.nan
+        df = df.fillna(method='bfill')
+        df = df.fillna(0)
+        tmp_array = np.array(df)
+
         if(original.size == 0):
             sio.savemat(DATAPATH+'ind_of_stock', mdict={'ind_of_stock':tmp_array})
         else:
