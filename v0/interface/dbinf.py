@@ -4,11 +4,11 @@ import sys
 import cx_Oracle
 import json
 import datetime
-import time
 import scipy.io as sio
 import numpy as np
 import pandas as pd
 from pandas import Series, DataFrame
+from time import sleep
 
 from ..loghandler import DefaultLogHandler
 
@@ -983,6 +983,8 @@ class OracleDbInf(object):
             sio.savemat(DATAPATH+'open_original.mat', mdict={'open_original':open_original})
             sio.savemat(DATAPATH+'high_original.mat', mdict={'high_original':high_original})
             sio.savemat(DATAPATH+'low_original.mat', mdict={'low_original':low_original})
+        
+        sleep(2)
 
         #计算各种前复权的价格
         open_forward_adjusted = np.zeros(np.shape(open_original))
@@ -1363,6 +1365,7 @@ class OracleDbInf(object):
 
         for i in range(len(datelist)):
             sdate = datetime.datetime.strptime(datelist[i], '%Y/%m/%d').strftime('%Y%m%d')
+            print(sdate)
             sql = 'select s_info_windcode,s_wrating_avg,s_wrating_upgrade,s_wrating_downgrade,s_wrating_instnum from  AShareStockRatingConsus   WHERE rating_dt=%s and s_wrating_cycle=0263002000' % sdate
             cursor.execute(sql)
             rs = cursor.fetchall()
